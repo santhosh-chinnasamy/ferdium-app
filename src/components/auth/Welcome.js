@@ -7,6 +7,7 @@ import serverlessLogin from '../../helpers/serverless-helpers';
 import { shuffleArray } from '../../helpers/array-helpers';
 
 import Link from '../ui/Link';
+import { H1 } from '../ui/headline';
 
 const messages = defineMessages({
   signupButton: {
@@ -23,7 +24,7 @@ const messages = defineMessages({
   },
   serverless: {
     id: 'services.serverless',
-    defaultMessage: 'Use Ferdi without an Account',
+    defaultMessage: 'Use Ferdium without an Account',
   },
 });
 
@@ -56,24 +57,20 @@ class Welcome extends Component {
           />
           {/* <img src="./assets/images/welcome.png" className="welcome__services" alt="" /> */}
           <div className="welcome__text">
-            <h1>Ferdi</h1>
+            <H1>Ferdium</H1>
           </div>
         </div>
+        <Link to={changeServerRoute} className="button__change-server">
+            <span>
+              {intl.formatMessage(messages.changeServer)}
+            </span>
+        </Link>
         <div className="welcome__buttons">
           <Link to={signupRoute} className="button button__inverted">
             {intl.formatMessage(messages.signupButton)}
           </Link>
           <Link to={loginRoute} className="button">
             {intl.formatMessage(messages.loginButton)}
-          </Link>
-          <Link to={changeServerRoute}>
-            <span
-              style={{
-                color: '#fff'
-              }}
-            >
-              {intl.formatMessage(messages.changeServer)}
-            </span>
           </Link>
           <br />
           <br />

@@ -1,6 +1,15 @@
 import color from 'color';
 import { reaction } from 'mobx';
-import { DEFAULT_APP_SETTINGS, iconSizeBias } from '../../config';
+import TopBarProgress from 'react-topbar-progress-indicator';
+
+import { isWindows, isLinux } from '../../environment';
+import {
+  DEFAULT_APP_SETTINGS,
+  iconSizeBias,
+  SIDEBAR_SERVICES_LOCATION_TOPLEFT,
+  SIDEBAR_SERVICES_LOCATION_CENTER,
+  SIDEBAR_SERVICES_LOCATION_BOTTOMRIGHT,
+} from '../../config';
 
 const STYLE_ELEMENT_ID = 'custom-appearance-style';
 
@@ -69,7 +78,7 @@ function generateAccentStyle(accentColorStr) {
     .franz-form .franz-form__toggle-wrapper .franz-form__toggle.is-active .franz-form__toggle-button,
     .theme__dark .franz-form__button,
     .franz-form__button,
-    .ferdi__fab,
+    .ferdium__fab,
     .franz-form .franz-form__slider-wrapper .slider::-webkit-slider-thumb,
     span.loader div > div > div {
       background: ${accentColorStr};
@@ -122,13 +131,16 @@ function generateServiceRibbonWidthStyle(
   iconSizeStr,
   vertical,
   isLabelEnabled,
+  sidebarServicesLocation,
+  useGrayscaleServices,
+  grayscaleServicesDim,
 ) {
   const width = Number(widthStr);
   const iconSize = Number(iconSizeStr) - iconSizeBias;
   let fontSize = 11;
   let tabItemHeightBias = -5;
   let sidebarSizeBias = 22;
-  const tabItemWidthBias = 2;
+  const tabItemWidthBias = 3;
 
   switch (width) {
     case 35:
@@ -172,14 +184,41 @@ function generateServiceRibbonWidthStyle(
     tabItemHeightBias = -5;
   }
 
+  if (isWindows || isLinux) {
+    sidebarSizeBias = 0;
+  }
+
   // Due to the lowest values for SIDEBAR_WIDTH and ICON_SIZES, this can be computed to a negative value
   const minimumAdjustedIconSize = Math.max(width / 2 + iconSize, 2);
+
+  let sidebarServicesAlignment;
+  switch (sidebarServicesLocation) {
+    case SIDEBAR_SERVICES_LOCATION_TOPLEFT:
+      sidebarServicesAlignment = vertical ? "left" : "start";
+      break;
+    case SIDEBAR_SERVICES_LOCATION_CENTER:
+      sidebarServicesAlignment = vertical ? "center" : "center";
+      break;
+    case SIDEBAR_SERVICES_LOCATION_BOTTOMRIGHT:
+      sidebarServicesAlignment = vertical ? "right" : "end";
+      break;
+    default:
+      sidebarServicesAlignment = vertical ? "left" : "start";
+      break;
+  }
+
+  const graysacleServices =
+  `filter: grayscale(1);
+  opacity: ${grayscaleServicesDim}%;`
 
   return vertical
     ? `
     .sidebar {
       height: ${width}px !important;
       overflow: hidden !important;
+    }
+    .sidebar div {
+      justify-content: ${sidebarServicesAlignment};
     }
     .tab-item {
       height: ${width - tabItemWidthBias}px !important;
@@ -189,6 +228,13 @@ function generateServiceRibbonWidthStyle(
     }
     .tab-item .tab-item__icon {
       width: ${minimumAdjustedIconSize}px !important;
+      ${useGrayscaleServices ? graysacleServices : null},
+    }
+    .tab-item .tab-item__label {
+      margin-left: 0px !important;
+    }
+    .tab-item.is-label-enabled {
+      padding-bottom: 0px !important;
     }
     .sidebar__button {
       font-size: ${width / 3}px !important;
@@ -216,12 +262,16 @@ function generateServiceRibbonWidthStyle(
     .sidebar {
       width: ${width}px !important;
     }
+    .tabs {
+      justify-content: ${sidebarServicesAlignment};
+    }
     .tab-item {
       width: ${width}px !important;
-      height: min-content !important;
+      height: ${width - tabItemWidthBias}px !important;
     }
     .tab-item .tab-item__icon {
       width: ${minimumAdjustedIconSize}px !important;
+      ${useGrayscaleServices ? graysacleServices : null},
     }
     .sidebar__button {
       font-size: ${width / 3}px !important;
@@ -242,8 +292,8 @@ function generateShowDragAreaStyle(accentColor) {
       background-color: ${accentColor};
     }
     #root {
-      /** Remove 22px from app height, otherwise the page will be too high */
-      height: calc(100% - 22px);
+      /** Remove 28px from app height, otherwise the page will be too high */
+      height: calc(100% - 28px);
     }
   `;
 }
@@ -260,7 +310,7 @@ function generateVerticalStyle(widthStr, alwaysShowWorkspaces) {
   }
   const width = Number(widthStr);
   const sidebarWidth = width - 4;
-  const verticalStyleOffset = 23;
+  const verticalStyleOffset = 29;
 
   return `
   .sidebar {
@@ -305,6 +355,9 @@ function generateStyle(settings) {
   const {
     accentColor,
     serviceRibbonWidth,
+    sidebarServicesLocation,
+    useGrayscaleServices,
+    grayscaleServicesDim,
     iconSize,
     showDragArea,
     useVerticalStyle,
@@ -317,17 +370,17 @@ function generateStyle(settings) {
   ) {
     style += generateAccentStyle(accentColor);
   }
-  if (
-    serviceRibbonWidth !== DEFAULT_APP_SETTINGS.serviceRibbonWidth ||
-    iconSize !== DEFAULT_APP_SETTINGS.iconSize
-  ) {
-    style += generateServiceRibbonWidthStyle(
-      serviceRibbonWidth,
-      iconSize,
-      useVerticalStyle,
-      showServiceName,
-    );
-  }
+
+  style += generateServiceRibbonWidthStyle(
+    serviceRibbonWidth,
+    iconSize,
+    useVerticalStyle,
+    showServiceName,
+    sidebarServicesLocation,
+    useGrayscaleServices,
+    grayscaleServicesDim,
+  );
+
   if (showDragArea) {
     style += generateShowDragAreaStyle(accentColor);
   }
@@ -345,22 +398,39 @@ function generateStyle(settings) {
 
   return style;
 }
+
+function updateProgressbar(settings) {
+  TopBarProgress.config({
+    barThickness: 4,
+    barColors: {
+      '0': settings.progressbarAccentColor,
+    },
+    shadowBlur: 5
+  });
+}
+
 function updateStyle(settings) {
   const style = generateStyle(settings);
   setAppearance(style);
+  updateProgressbar(settings);
 }
 
 export default function initAppearance(stores) {
   const { settings } = stores;
   createStyleElement();
+  updateProgressbar(settings);
 
   // Update style when settings change
   reaction(
     () => [
       settings.all.app.accentColor,
+      settings.all.app.progressbarAccentColor,
       settings.all.app.serviceRibbonWidth,
       settings.all.app.iconSize,
       settings.all.app.showDragArea,
+      settings.all.app.sidebarServicesLocation,
+      settings.all.app.useGrayscaleServices,
+      settings.all.app.grayscaleServicesDim,
       settings.all.app.useVerticalStyle,
       settings.all.app.alwaysShowWorkspaces,
       settings.all.app.showServiceName,

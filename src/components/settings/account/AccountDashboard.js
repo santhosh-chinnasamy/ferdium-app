@@ -6,7 +6,7 @@ import ReactTooltip from 'react-tooltip';
 import { H1, H2 } from '../../ui/headline';
 
 import Loader from '../../ui/Loader';
-import Button from '../../ui/Button';
+import Button from '../../ui/button';
 import Infobox from '../../ui/Infobox';
 import { LOCAL_SERVER, LIVE_FRANZ_API } from '../../../config';
 
@@ -42,7 +42,7 @@ const messages = defineMessages({
   deleteInfo: {
     id: 'settings.account.deleteInfo',
     defaultMessage:
-      "If you don't need your Ferdi account any longer, you can delete your account and all related data here.",
+      "If you don't need your Ferdium account any longer, you can delete your account and all related data here.",
   },
   deleteEmailSent: {
     id: 'settings.account.deleteEmailSent',
@@ -51,7 +51,7 @@ const messages = defineMessages({
   },
   yourLicense: {
     id: 'settings.account.yourLicense',
-    defaultMessage: 'Your Ferdi License:',
+    defaultMessage: 'Your Ferdium License:',
   },
   accountUnavailable: {
     id: 'settings.account.accountUnavailable',
@@ -60,7 +60,7 @@ const messages = defineMessages({
   accountUnavailableInfo: {
     id: 'settings.account.accountUnavailableInfo',
     defaultMessage:
-      'You are using Ferdi without an account. If you want to use Ferdi with an account and keep your services synchronized across installations, please select a server in the Settings tab then login.',
+      'You are using Ferdium without an account. If you want to use Ferdium with an account and keep your services synchronized across installations, please select a server in the Settings tab then login.',
   },
 });
 
@@ -106,9 +106,9 @@ class AccountDashboard extends Component {
         <div className="settings__body">
           {isUsingWithoutAccount && (
             <>
-              <h1 style={{ marginBottom: 0 }}>
+              <H1 className='.no-bottom-margin'>
                 {intl.formatMessage(messages.accountUnavailable)}
-              </h1>
+              </H1>
               <p
                 className="settings__message"
                 style={{

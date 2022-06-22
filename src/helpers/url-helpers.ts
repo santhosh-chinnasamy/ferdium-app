@@ -6,7 +6,7 @@ import { shell } from 'electron';
 
 import { ALLOWED_PROTOCOLS } from '../config';
 
-const debug = require('debug')('Ferdi:Helpers:url');
+const debug = require('../preload-safe-debug')('Ferdium:Helpers:url');
 
 export function isValidExternalURL(url: string | URL) {
   let parsedUrl: URL;
@@ -23,6 +23,10 @@ export function isValidExternalURL(url: string | URL) {
   return isAllowed;
 }
 
+export function fixUrl(url: string | URL) {
+  return url.toString().replaceAll('//', '/').replaceAll('http:/', 'http://').replaceAll('https:/', 'https://').replaceAll('file:/', 'file://');
+}
+
 export function isValidFileUrl(path: string) {
   return path.startsWith('file') && existsSync(new URL(path));
 }
@@ -37,8 +41,9 @@ export function openExternalUrl(
   url: string | URL,
   skipValidityCheck: boolean = false,
 ) {
-  debug('Open url:', url, 'with skipValidityCheck:', skipValidityCheck);
-  if (skipValidityCheck || isValidExternalURL(url)) {
-    shell.openExternal(url.toString());
+  const fixedUrl = fixUrl(url.toString());
+  debug('Open url:', fixedUrl, 'with skipValidityCheck:', skipValidityCheck);
+  if (skipValidityCheck || isValidExternalURL(fixedUrl)) {
+    shell.openExternal(fixedUrl.toString());
   }
 }

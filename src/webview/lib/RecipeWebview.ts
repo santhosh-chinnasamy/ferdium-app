@@ -2,7 +2,7 @@ import { ipcRenderer } from 'electron';
 import { BrowserWindow } from '@electron/remote';
 import { pathExistsSync, readFileSync, existsSync } from 'fs-extra';
 
-const debug = require('debug')('Ferdi:Plugin:RecipeWebview');
+const debug = require('../../preload-safe-debug')('Ferdium:Plugin:RecipeWebview');
 
 class RecipeWebview {
   badgeHandler: any;
@@ -90,6 +90,15 @@ class RecipeWebview {
    */
   safeParseInt(text) {
     return this.badgeHandler.safeParseInt(text);
+  }
+
+  /**
+   * Find if url contains image
+   *
+   * @param  {string | number | undefined | null} text to be parsed
+   */
+  isImage(url): boolean {
+    return /\.(jpg|jpeg|png|webp|avif|gif|svg)$/.test(url.split(/[#?]/)[0]);
   }
 
   /**

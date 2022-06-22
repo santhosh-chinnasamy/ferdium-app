@@ -1,3 +1,5 @@
+import { cleanseJSObject, convertToJSON } from '../../jsUtils';
+
 type Recipe = {
   setBadge: (direct: number, indirect: number) => void;
   setDialogTitle: (title: string) => void;
@@ -14,7 +16,7 @@ export default class Userscript {
   // Service configuration
   config = {};
 
-  // Ferdi and service settings
+  // Ferdium and service settings
   settings = {};
 
   constructor(recipe, controller, config) {
@@ -25,7 +27,7 @@ export default class Userscript {
   }
 
   /**
-   * Set internal copy of Ferdi's settings.
+   * Set internal copy of Ferdium's settings.
    * This is only used internally and can not be used to change any settings
    *
    * @param {*} settings
@@ -34,7 +36,7 @@ export default class Userscript {
   internal_setSettings(settings: any) {
     // This is needed to get a clean JS object from the settings itself to provide better accessibility
     // Otherwise this will be a mobX instance
-    this.settings = JSON.parse(JSON.stringify(settings));
+    this.settings = cleanseJSObject(settings);
   }
 
   /**
@@ -88,7 +90,7 @@ export default class Userscript {
    * @param {any} value
    */
   set(key: string, value: string) {
-    window.localStorage.setItem(`ferdi-user-${key}`, JSON.stringify(value));
+    window.localStorage.setItem(`ferdium-user-${key}`, JSON.stringify(value));
   }
 
   /**
@@ -98,10 +100,10 @@ export default class Userscript {
    * @return Value of the key
    */
   get(key: string) {
-    const ferdiUserKey = window.localStorage.getItem(`ferdi-user-${key}`);
+    const ferdiumUserKey = window.localStorage.getItem(`ferdium-user-${key}`);
 
-    if (ferdiUserKey) {
-      return JSON.parse(ferdiUserKey);
+    if (ferdiumUserKey) {
+      return convertToJSON(ferdiumUserKey);
     }
   }
 }

@@ -14,7 +14,6 @@ interface IProps extends WithStylesProps<typeof styles> {
   onUnmount?: () => void;
   ctaOnClick?: () => void;
   ctaLabel?: string;
-  ctaLoading?: boolean;
   children: ReactNode;
   className: string;
 }
@@ -46,7 +45,7 @@ const buttonStyles = (theme: Theme) => {
 const infoBoxTransition: string = 'none';
 const ctaTransition: string = 'none';
 
-// TODO: Not sure why, but this location alone, the `dinwo` is not defined - and it throws an error thus aborting the startup sequence of ferdi
+// TODO: Not sure why, but this location alone, the `dinwo` is not defined - and it throws an error thus aborting the startup sequence of ferdium
 // if (window && window.matchMedia('(prefers-reduced-motion: no-preference)')) {
 //   infoBoxTransition = 'all 0.5s';
 //   ctaTransition = 'opacity 0.3s';
@@ -115,7 +114,6 @@ class InfoboxComponent extends Component<IProps, IState> {
     ctaOnClick: () => {},
     onDismiss: () => {},
     ctaLabel: '',
-    ctaLoading: false,
   };
 
   state = {

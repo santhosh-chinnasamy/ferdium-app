@@ -7,16 +7,17 @@ import classnames from 'classnames';
 
 import Form from '../../lib/Form';
 import Toggle from '../ui/Toggle';
-import Button from '../ui/Button';
+import Button from '../ui/button';
+import { H1 } from '../ui/headline';
 
 const messages = defineMessages({
   headline: {
     id: 'import.headline',
-    defaultMessage: 'Import your Ferdi 4 services',
+    defaultMessage: 'Import your Ferdium 4 services',
   },
   notSupportedHeadline: {
     id: 'import.notSupportedHeadline',
-    defaultMessage: 'Services not yet supported in Ferdi 5',
+    defaultMessage: 'Services not yet supported in Ferdium 5',
   },
   submitButtonLabel: {
     id: 'import.submit.label',
@@ -90,7 +91,7 @@ class Import extends Component {
             onSubmit={e => this.submit(e)}
           >
             <img src="./assets/images/logo.svg" className="auth__logo" alt="" />
-            <h1>{intl.formatMessage(messages.headline)}</h1>
+            <H1>{intl.formatMessage(messages.headline)}</H1>
             <table className="service-table available-services">
               <tbody>
                 {this.form.$('import').map((service, i) => (

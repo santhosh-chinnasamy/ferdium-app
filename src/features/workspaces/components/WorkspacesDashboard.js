@@ -12,6 +12,7 @@ import CreateWorkspaceForm from './CreateWorkspaceForm';
 import Request from '../../../stores/lib/Request';
 import Appear from '../../../components/ui/effects/Appear';
 import UIStore from '../../../stores/UIStore';
+import { H1 } from '../../../components/ui/headline';
 
 const messages = defineMessages({
   headline: {
@@ -41,11 +42,11 @@ const messages = defineMessages({
   workspaceFeatureInfo: {
     id: 'settings.workspaces.workspaceFeatureInfo',
     defaultMessage:
-      'Ferdi Workspaces let you focus on what’s important right now. Set up different sets of services and easily switch between them at any time. You decide which services you need when and where, so we can help you stay on top of your game - or easily switch off from work whenever you want.',
+      'Ferdium Workspaces let you focus on what’s important right now. Set up different sets of services and easily switch between them at any time. You decide which services you need when and where, so we can help you stay on top of your game - or easily switch off from work whenever you want.',
   },
   workspaceFeatureHeadline: {
     id: 'settings.workspaces.workspaceFeatureHeadline',
-    defaultMessage: 'Less is More: Introducing Ferdi Workspaces',
+    defaultMessage: 'Less is More: Introducing Ferdium Workspaces',
   },
 });
 
@@ -98,7 +99,7 @@ class WorkspacesDashboard extends Component {
     return (
       <div className="settings__main">
         <div className="settings__header">
-          <h1>{intl.formatMessage(messages.headline)}</h1>
+          <H1>{intl.formatMessage(messages.headline)}</H1>
         </div>
         <div className="settings__body">
           {/* ===== Workspace updated info ===== */}

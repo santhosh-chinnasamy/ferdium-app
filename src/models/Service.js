@@ -14,8 +14,9 @@ import {
   ifUndefinedNumber,
 } from '../jsUtils';
 
-const debug = require('debug')('Ferdi:Service');
+const debug = require('../preload-safe-debug')('Ferdium:Service');
 
+// TODO: Shouldn't most of these values default to what's defined in DEFAULT_SERVICE_SETTINGS?
 export default class Service {
   id = '';
 
@@ -53,6 +54,8 @@ export default class Service {
 
   @observable isBadgeEnabled = true;
 
+  @observable trapLinkClicks = false;
+
   @observable isIndirectMessageBadgeEnabled = true;
 
   @observable iconUrl = '';
@@ -63,6 +66,8 @@ export default class Service {
 
   @observable isDarkModeEnabled = false;
 
+  @observable isProgressbarEnabled = true;
+
   @observable darkReaderSettings = { brightness: 100, contrast: 90, sepia: 10 };
 
   @observable spellcheckerLanguage = null;
@@ -70,6 +75,8 @@ export default class Service {
   @observable isFirstLoad = true;
 
   @observable isLoading = true;
+
+  @observable isLoadingPage = true;
 
   @observable isError = false;
 
@@ -133,6 +140,10 @@ export default class Service {
       data.isBadgeEnabled,
       this.isBadgeEnabled,
     );
+    this.trapLinkClicks = ifUndefinedBoolean(
+      data.trapLinkClicks,
+      this.trapLinkClicks,
+    );
     this.isIndirectMessageBadgeEnabled = ifUndefinedBoolean(
       data.isIndirectMessageBadgeEnabled,
       this.isIndirectMessageBadgeEnabled,
@@ -145,6 +156,10 @@ export default class Service {
     this.darkReaderSettings = ifUndefinedString(
       data.darkReaderSettings,
       this.darkReaderSettings,
+    );
+    this.isProgressbarEnabled = ifUndefinedBoolean(
+      data.isProgressbarEnabled,
+      this.isProgressbarEnabled,
     );
     this.hasCustomUploadedIcon = ifUndefinedBoolean(
       data.hasCustomIcon,
@@ -173,7 +188,7 @@ export default class Service {
     );
 
     // Check if "Hibernate on Startup" is enabled and hibernate all services except active one
-    const { hibernateOnStartup } = window['ferdi'].stores.settings.app;
+    const { hibernateOnStartup } = window['ferdium'].stores.settings.app;
     // The service store is probably not loaded yet so we need to use localStorage data to get active service
     const isActive =
       window.localStorage.service &&
@@ -201,11 +216,13 @@ export default class Service {
       id: this.id,
       spellcheckerLanguage: this.spellcheckerLanguage,
       isDarkModeEnabled: this.isDarkModeEnabled,
+      isProgressbarEnabled: this.isProgressbarEnabled,
       darkReaderSettings: this.darkReaderSettings,
       team: this.team,
       url: this.url,
       hasCustomIcon: this.hasCustomIcon,
       onlyShowFavoritesInUnreadCount: this.onlyShowFavoritesInUnreadCount,
+      trapLinkClicks: this.trapLinkClicks,
     };
   }
 
@@ -375,11 +392,20 @@ export default class Service {
 
       this.hasCrashed = false;
       this.isLoading = true;
+      this.isLoadingPage = true;
       this.isError = false;
+    });
+
+    this.webview.addEventListener('did-stop-loading', event => {
+      debug('Did stop load', this.name, event);
+
+      this.isLoading = false;
+      this.isLoadingPage = false;
     });
 
     const didLoad = () => {
       this.isLoading = false;
+      this.isLoadingPage = false;
 
       if (!this.isError) {
         this.isFirstLoad = false;
@@ -399,6 +425,7 @@ export default class Service {
         this.isError = true;
         this.errorMessage = event.errorDescription;
         this.isLoading = false;
+        this.isLoadingPage = false;
       }
     });
 

@@ -1,8 +1,9 @@
-import { app, ipcMain, BrowserWindow } from 'electron';
+import { ipcMain, BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { isMac, isWindows } from '../../environment';
+import { appEvents } from '../..';
 
-const debug = require('debug')('Ferdi:ipcApi:autoUpdate');
+const debug = require('../../preload-safe-debug')('Ferdium:ipcApi:autoUpdate');
 
 export default (params: { mainWindow: BrowserWindow; settings: any }) => {
   const enableUpdate = Boolean(params.settings.app.get('automaticUpdates'));
@@ -24,8 +25,12 @@ export default (params: { mainWindow: BrowserWindow; settings: any }) => {
             autoUpdater.checkForUpdates();
           } else if (args.action === 'install') {
             debug('installing update');
-            app.removeAllListeners('window-all-closed');
-            params.mainWindow.removeAllListeners('close');
+
+            appEvents.emit('install-update');
+
+            const openedWindows = BrowserWindow.getAllWindows();
+            for (const window of openedWindows)  window.close();
+
             autoUpdater.quitAndInstall();
           }
         } catch (error) {

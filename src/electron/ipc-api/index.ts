@@ -4,8 +4,9 @@ import settings from './settings';
 import sessionStorage from './sessionStorage';
 import appIndicator from './appIndicator';
 import download from './download';
+import processManager from './processManager';
 import localServer from './localServer';
-import cld from './cld';
+import languageDetect from './languageDetect';
 import dnd from './dnd';
 import focusState from './focusState';
 
@@ -19,8 +20,9 @@ export default (params: {
   autoUpdate(params);
   appIndicator(params);
   download(params);
+  processManager();
   localServer(params);
-  cld();
+  languageDetect();
   dnd();
   focusState(params);
 };

@@ -2,20 +2,20 @@
 
 import ms from 'ms';
 
-export const DEFAULT_ACCENT_COLOR = '#7266F0';
+export const DEFAULT_ACCENT_COLOR = '#7367F0';
 
 export const CHECK_INTERVAL = ms('1h'); // How often should we perform checks
 
 export const LOCAL_HOSTNAME = 'localhost';
-export const LOCAL_PORT = 45_569;
+export const LOCAL_PORT = 46_569;
 export const LOCAL_API = 'http://localhost:3000';
 export const DEV_FRANZ_API = 'https://dev.franzinfra.com';
 
-export const LIVE_FERDI_API = 'https://api.getferdi.com';
+export const LIVE_FERDIUM_API = 'https://api.ferdium.org';
 export const LIVE_FRANZ_API = 'https://api.franzinfra.com';
 
-// URL used to submit debugger information, see https://github.com/getferdi/debugger
-export const DEBUG_API = 'https://debug.getferdi.com';
+// URL used to submit debugger information, see https://github.com/ferdium/debugger
+export const DEBUG_API = 'https://debug.ferdium.org';
 
 export const LOCAL_WS_API = 'ws://localhost:3000';
 export const DEV_WS_API = 'wss://dev.franzinfra.com';
@@ -23,7 +23,7 @@ export const LIVE_WS_API = 'wss://api.franzinfra.com';
 
 export const LOCAL_API_WEBSITE = 'http://localhost:3333';
 export const DEV_API_FRANZ_WEBSITE = 'https://meetfranz.com';
-export const LIVE_API_FERDI_WEBSITE = 'https://getferdi.com';
+export const LIVE_API_FERDIUM_WEBSITE = 'https://ferdium.org';
 
 export const STATS_API = 'https://stats.franzinfra.com';
 
@@ -75,14 +75,18 @@ export const NAVIGATION_BAR_BEHAVIOURS = {
   never: 'Never show navigation bar',
 };
 
+export const SEARCH_ENGINE_STARTPAGE = 'startPage';
 export const SEARCH_ENGINE_GOOGLE = 'google';
 export const SEARCH_ENGINE_DDG = 'duckDuckGo';
 export const SEARCH_ENGINE_NAMES = {
+  [SEARCH_ENGINE_STARTPAGE]: 'Startpage',
   [SEARCH_ENGINE_GOOGLE]: 'Google',
   [SEARCH_ENGINE_DDG]: 'DuckDuckGo',
 };
 
 export const SEARCH_ENGINE_URLS = {
+  [SEARCH_ENGINE_STARTPAGE]: ({ searchTerm }) =>
+    `https://www.startpage.com/sp/search?query=${searchTerm}`,
   [SEARCH_ENGINE_GOOGLE]: ({ searchTerm }) =>
     `https://www.google.com/search?q=${searchTerm}`,
   [SEARCH_ENGINE_DDG]: ({ searchTerm }) =>
@@ -101,6 +105,7 @@ const TODO_RTM_URL = 'https://www.rememberthemilk.com/';
 const TODO_ANYDO_URL = 'https://desktop.any.do/';
 const TODO_GOOGLETASKS_URL =
   'https://tasks.google.com/embed/?origin=https%3A%2F%2Fcalendar.google.com&fullWidth=1';
+const TODO_GOOGLEKEEP_URL = 'https://keep.google.com/';
 
 export const TODO_SERVICE_RECIPE_IDS = {
   [TODO_TODOIST_URL]: 'todoist',
@@ -109,6 +114,7 @@ export const TODO_SERVICE_RECIPE_IDS = {
   [TODO_MSTODO_URL]: 'mstodo',
   [TODO_HABITICA_URL]: 'habitica',
   [TODO_ANYDO_URL]: 'anydo',
+  [TODO_GOOGLEKEEP_URL]: 'googlekeep',
 };
 
 export const TODO_APPS = {
@@ -121,6 +127,7 @@ export const TODO_APPS = {
   [TODO_RTM_URL]: 'Remember The Milk',
   [TODO_ANYDO_URL]: 'Any.do',
   [TODO_GOOGLETASKS_URL]: 'Google Tasks',
+  [TODO_GOOGLEKEEP_URL]: 'Google Keep',
   [CUSTOM_TODO_SERVICE]: 'Other service',
 };
 
@@ -137,6 +144,15 @@ export const SIDEBAR_WIDTH = {
   80: 'Wide sidebar',
   90: 'Very wide sidebar',
   100: 'Extremely wide sidebar',
+};
+
+export const SIDEBAR_SERVICES_LOCATION_TOPLEFT = 0;
+export const SIDEBAR_SERVICES_LOCATION_CENTER = 1;
+export const SIDEBAR_SERVICES_LOCATION_BOTTOMRIGHT = 2;
+export const SIDEBAR_SERVICES_LOCATION = {
+  [SIDEBAR_SERVICES_LOCATION_TOPLEFT]: 'Top/Left',
+  [SIDEBAR_SERVICES_LOCATION_CENTER]: 'Center',
+  [SIDEBAR_SERVICES_LOCATION_BOTTOMRIGHT]: 'Bottom/Right',
 };
 
 export const ICON_SIZES = {
@@ -159,17 +175,17 @@ export const DEFAULT_WINDOW_OPTIONS = {
 };
 
 export const GITHUB_FRANZ_URL = 'https://github.com/meetfranz';
-export const GITHUB_FERDI_URL = 'https://github.com/getferdi';
-export const FRANZ_SERVICE_REQUEST = `${GITHUB_FERDI_URL}/recipes/issues`;
-export const FRANZ_TRANSLATION = 'https://crowdin.com/project/getferdi';
+export const GITHUB_FERDIUM_URL = 'https://github.com/ferdium';
+export const FERDIUM_SERVICE_REQUEST = `${GITHUB_FERDIUM_URL}/ferdium-recipes/issues`;
+export const FRANZ_TRANSLATION = 'https://crowdin.com/project/ferdium';
 export const FRANZ_DEV_DOCS = 'http://bit.ly/franz-dev-hub';
 
 export const FILE_SYSTEM_SETTINGS_TYPES = ['app', 'proxy'];
 
-export const LOCAL_SERVER = 'You are using Ferdi without a server';
-export const SERVER_NOT_LOADED = 'Ferdi::SERVER_NOT_LOADED';
+export const LOCAL_SERVER = 'You are using Ferdium without a server';
+export const SERVER_NOT_LOADED = 'Ferdium::SERVER_NOT_LOADED';
 
-export const ALLOWED_PROTOCOLS = ['https:', 'http:', 'ftp:', 'ferdi:'];
+export const ALLOWED_PROTOCOLS = ['https:', 'http:', 'ftp:', 'ferdium:'];
 
 export const DEFAULT_SETTING_KEEP_ALL_WORKSPACES_LOADED = false;
 
@@ -191,6 +207,7 @@ export const DEFAULT_APP_SETTINGS = {
   autoLaunchInBackground: false,
   runInBackground: true,
   reloadAfterResume: true,
+  reloadAfterResumeTime: 10,
   enableSystemTray: true,
   startMinimized: false,
   confirmOnQuit: false,
@@ -206,6 +223,7 @@ export const DEFAULT_APP_SETTINGS = {
   enableSpellchecking: true,
   spellcheckerLanguage: 'en-us',
   darkMode: false,
+  navigationBarManualActive: false,
   splitMode: false,
   splitColumns: 3,
   fallbackLocale: 'en-US',
@@ -214,8 +232,8 @@ export const DEFAULT_APP_SETTINGS = {
   enableGPUAcceleration: true,
   enableGlobalHideShortcut: false,
 
-  // Ferdi specific options
-  server: LIVE_FERDI_API,
+  // Ferdium specific options
+  server: LIVE_FERDIUM_API,
   predefinedTodoServer: DEFAULT_TODO_SERVICE,
   autohideMenuBar: false,
   lockingFeatureEnabled: false,
@@ -236,12 +254,19 @@ export const DEFAULT_APP_SETTINGS = {
   userAgentPref: '',
   adaptableDarkMode: true,
   accentColor: DEFAULT_ACCENT_COLOR,
+  progressbarAccentColor: DEFAULT_ACCENT_COLOR,
   serviceRibbonWidth: 68,
+  sidebarServicesLocation: SIDEBAR_SERVICES_LOCATION_TOPLEFT,
   iconSize: iconSizeBias,
-  sentry: false,
   navigationBarBehaviour: 'custom',
-  searchEngine: SEARCH_ENGINE_DDG,
+  searchEngine: SEARCH_ENGINE_STARTPAGE,
   useVerticalStyle: false,
+  hideRecipesButton: false,
+  useGrayscaleServices: false,
+  grayscaleServicesDim: 50,
+  hideWorkspacesButton: false,
+  hideNotificationsButton: false,
+  hideSettingsButton: false,
   alwaysShowWorkspaces: false,
   liftSingleInstanceLock: false,
   enableLongPressServiceHint: false,
@@ -255,9 +280,11 @@ export const DEFAULT_SERVICE_SETTINGS = {
   isWakeUpEnabled: true,
   isNotificationEnabled: true,
   isBadgeEnabled: true,
+  trapLinkClicks: false,
   isMuted: false,
   customIcon: false,
   isDarkModeEnabled: false,
+  isProgressbarEnabled: false,
   // Note: Do NOT change these default values. If they change, then the corresponding changes in the recipes needs to be done
   hasDirectMessages: true,
   hasIndirectMessages: false,

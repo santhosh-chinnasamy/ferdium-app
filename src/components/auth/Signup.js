@@ -7,11 +7,12 @@ import { defineMessages, injectIntl } from 'react-intl';
 import Form from '../../lib/Form';
 import { required, email, minLength } from '../../helpers/validation-helpers';
 import Input from '../ui/Input';
-import Button from '../ui/Button';
+import Button from '../ui/button';
 import Link from '../ui/Link';
 
 import { globalError as globalErrorPropType } from '../../prop-types';
 import { termsBase } from '../../api/apiBase';
+import { H1 } from '../ui/headline';
 
 const messages = defineMessages({
   headline: {
@@ -40,7 +41,7 @@ const messages = defineMessages({
   },
   legalInfo: {
     id: 'signup.legal.info',
-    defaultMessage: 'By creating a Ferdi account you accept the',
+    defaultMessage: 'By creating a Ferdium account you accept the',
   },
   terms: {
     id: 'signup.legal.terms',
@@ -72,34 +73,35 @@ class Signup extends Component {
     error: globalErrorPropType.isRequired,
   };
 
-  form = new Form(
-    {
+  form = (() => {
+    const { intl } = this.props;
+    return new Form({
       fields: {
         firstname: {
-          label: this.props.intl.formatMessage(messages.firstnameLabel),
+          label: intl.formatMessage(messages.firstnameLabel),
           value: '',
           validators: [required],
         },
         lastname: {
-          label: this.props.intl.formatMessage(messages.lastnameLabel),
+          label: intl.formatMessage(messages.lastnameLabel),
           value: '',
           validators: [required],
         },
         email: {
-          label: this.props.intl.formatMessage(messages.emailLabel),
+          label: intl.formatMessage(messages.emailLabel),
           value: '',
           validators: [required, email],
         },
         password: {
-          label: this.props.intl.formatMessage(messages.passwordLabel),
+          label: intl.formatMessage(messages.passwordLabel),
           value: '',
           validators: [required, minLength(6)],
           type: 'password',
         },
       },
     },
-    this.props.intl,
-  );
+    intl,
+  )})();
 
   submit(e) {
     e.preventDefault();
@@ -124,7 +126,7 @@ class Signup extends Component {
             onSubmit={e => this.submit(e)}
           >
             <Link to='/auth/welcome'><img src="./assets/images/logo.svg" className="auth__logo" alt="" /></Link>
-            <h1>{intl.formatMessage(messages.headline)}</h1>
+            <H1>{intl.formatMessage(messages.headline)}</H1>
             <div className="grid__row">
               <Input field={form.$('firstname')} focus />
               <Input field={form.$('lastname')} />

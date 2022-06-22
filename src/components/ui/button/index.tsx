@@ -25,18 +25,22 @@ interface IProps extends IFormField, WithStylesProps<typeof styles> {
     event: MouseEvent<HTMLButtonElement> | MouseEvent<HTMLAnchorElement>,
   ) => void;
   buttonType?: ButtonType;
-  stretch?: boolean;
   loaded?: boolean;
   busy?: boolean;
   icon?: string;
   href?: string;
   target?: string;
+  htmlForm?: string;
 }
 
 let buttonTransition: string = 'none';
 let loaderContainerTransition: string = 'none';
 
-if (window && window.matchMedia('(prefers-reduced-motion: no-preference)')) {
+if (
+  typeof window !== 'undefined' &&
+  window &&
+  window.matchMedia('(prefers-reduced-motion: no-preference)')
+) {
   buttonTransition = 'background .5s, opacity 0.3s';
   loaderContainerTransition = 'all 0.3s';
 }
@@ -52,8 +56,7 @@ const styles = (theme: Theme) => ({
     outline: 'none',
     alignItems: 'center',
     padding: 0,
-    width: (props: IProps) =>
-      (props.stretch ? '100%' : 'auto') as Property.Width<string>,
+    width: 'auto' as Property.Width<string>,
     fontSize: theme.uiFontSize,
     textDecoration: 'none',
 
@@ -137,8 +140,7 @@ const styles = (theme: Theme) => ({
     transition: loaderContainerTransition,
     marginLeft: (props: IProps): number => (!props.busy ? 10 : 20),
     marginRight: (props: IProps): number => (!props.busy ? -10 : -20),
-    position: (props: IProps): Property.Position =>
-      props.stretch ? 'absolute' : 'inherit',
+    position: (): Property.Position => 'inherit',
   },
   icon: {
     margin: [1, 10, 0, -5],
@@ -190,15 +192,15 @@ class ButtonComponent extends Component<IProps> {
       icon,
       href,
       target,
+      htmlForm,
     } = this.props;
 
     const { busy } = this.state;
-
     let showLoader = false;
     if (loaded) {
       showLoader = !loaded;
       console.warn(
-        'Ferdi Button prop `loaded` will be deprecated in the future. Please use `busy` instead',
+        'Ferdium Button prop `loaded` will be deprecated in the future. Please use `busy` instead',
       );
     }
     if (busy) {
@@ -238,6 +240,7 @@ class ButtonComponent extends Component<IProps> {
         })}
         disabled={disabled}
         data-type="franz-button"
+        {...(htmlForm && { form: htmlForm })}
       >
         {content}
       </button>
@@ -262,6 +265,6 @@ class ButtonComponent extends Component<IProps> {
   }
 }
 
-export const Button = injectStyle(styles, { injectTheme: true })(
-  ButtonComponent,
-);
+const Button = injectStyle(styles, { injectTheme: true })(ButtonComponent);
+
+export default Button;

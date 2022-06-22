@@ -7,13 +7,16 @@ import {
   ipcMain,
   session,
   dialog,
+  desktopCapturer,
 } from 'electron';
 
 import { emptyDirSync, ensureFileSync } from 'fs-extra';
 import { join } from 'path';
 import windowStateKeeper from 'electron-window-state';
+import minimist from 'minimist';
 import ms from 'ms';
-import { initializeRemote } from './electron-util';
+import { EventEmitter } from 'events';
+import { enableWebContents, initializeRemote } from './electron-util';
 import { enforceMacOSAppLocation } from './enforce-macos-app-location';
 
 initializeRemote();
@@ -44,7 +47,7 @@ import { asarPath } from './helpers/asar-helpers';
 import { openExternalUrl } from './helpers/url-helpers';
 import userAgent from './helpers/userAgent-helpers';
 
-const debug = require('debug')('Ferdi:App');
+const debug = require('./preload-safe-debug')('Ferdium:App');
 
 // Globally set useragent to fix user agent override in service workers
 debug('Set userAgent to ', userAgent());
@@ -54,6 +57,9 @@ app.userAgentFallback = userAgent();
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow: BrowserWindow | undefined;
 let willQuitApp = false;
+let overrideAppQuitForUpdate = false;
+
+export const appEvents = new EventEmitter();
 
 // Register methods to be called once the window has been loaded.
 let onDidLoadFns: any[] | null = [];
@@ -63,7 +69,7 @@ function onDidLoad(fn: {
   (window: BrowserWindow): void;
   (window: BrowserWindow): void;
   (arg0: BrowserWindow): void;
-}) {
+}): void {
   if (onDidLoadFns) {
     onDidLoadFns.push(fn);
   } else if (mainWindow) {
@@ -86,11 +92,6 @@ const proxySettings = new Settings('proxy');
 
 const retrieveSettingValue = (key: string, defaultValue: boolean) =>
   ifUndefinedBoolean(settings.get(key), defaultValue);
-
-if (retrieveSettingValue('sentry', DEFAULT_APP_SETTINGS.sentry)) {
-  // eslint-disable-next-line global-require
-  require('./sentry');
-}
 
 const liftSingleInstanceLock = retrieveSettingValue(
   'liftSingleInstanceLock',
@@ -139,7 +140,7 @@ if (!gotTheLock) {
           } else if (argv.includes('--quit')) {
             // Needs to be delayed to not interfere with mainWindow.restore();
             setTimeout(() => {
-              debug('Quitting Ferdi via Task');
+              debug('Quitting Ferdium via Task');
               app.quit();
             }, 1);
           }
@@ -212,15 +213,18 @@ const createWindow = () => {
       nodeIntegration: true,
       contextIsolation: false,
       webviewTag: true,
-      preload: join(__dirname, 'sentry.js'),
-      nativeWindowOpen: true,
-      // @ts-expect-error Object literal may only specify known properties, and 'enableRemoteModule' does not exist in type 'WebPreferences'.
-      enableRemoteModule: true,
     },
+  });
+
+  enableWebContents(mainWindow.webContents);
+
+  app.on('browser-window-created', (_, window) => {
+    enableWebContents(window.webContents);
   });
 
   app.on('web-contents-created', (_e, contents) => {
     if (contents.getType() === 'webview') {
+      enableWebContents(contents);
       contents.on('new-window', event => {
         event.preventDefault();
       });
@@ -314,7 +318,8 @@ const createWindow = () => {
         debug('Window: hide');
         mainWindow?.hide();
       }
-    } else {
+    } else if (!overrideAppQuitForUpdate) {
+      debug('Quitting the app');
       dbus.stop();
       app.quit();
     }
@@ -417,8 +422,8 @@ const createWindow = () => {
 // https://electronjs.org/docs/api/chrome-command-line-switches
 // used for Kerberos support
 // Usage e.g. MACOS
-// $ Ferdi.app/Contents/MacOS/Ferdi --auth-server-whitelist *.mydomain.com --auth-negotiate-delegate-whitelist *.mydomain.com
-const argv = require('minimist')(process.argv.slice(1));
+// $ Ferdium.app/Contents/MacOS/Ferdium --auth-server-whitelist *.mydomain.com --auth-negotiate-delegate-whitelist *.mydomain.com
+const argv = minimist(process.argv.slice(1));
 
 if (argv['auth-server-whitelist']) {
   app.commandLine.appendSwitch(
@@ -448,7 +453,7 @@ app.on('ready', () => {
   enforceMacOSAppLocation();
 
   // Register App URL
-  const protocolClient = isDevMode ? 'ferdi-dev' : 'ferdi';
+  const protocolClient = isDevMode ? 'ferdium-dev' : 'ferdium';
   if (!app.isDefaultProtocolClient(protocolClient, process.execPath)) {
     app.setAsDefaultProtocolClient(protocolClient, process.execPath);
   }
@@ -467,15 +472,15 @@ app.on('ready', () => {
         arguments: `${extraArgs}--reset-window`,
         iconPath,
         iconIndex: 0,
-        title: 'Move Ferdi to Current Display',
-        description: 'Restore the position and size of Ferdi',
+        title: 'Move Ferdium to Current Display',
+        description: 'Restore the position and size of Ferdium',
       },
       {
         program: process.execPath,
         arguments: `${extraArgs}--quit`,
         iconPath,
         iconIndex: 0,
-        title: 'Quit Ferdi',
+        title: 'Quit Ferdium',
         description: '',
       },
     ]);
@@ -520,9 +525,9 @@ ipcMain.on('open-browser-window', (_e, { url, serviceId }) => {
     fullscreenable: false,
     webPreferences: {
       session: serviceSession,
-      nativeWindowOpen: true,
     },
   });
+  enableWebContents(child.webContents);
   child.show();
   child.loadURL(url);
   debug('Received open-browser-window', url);
@@ -627,6 +632,11 @@ ipcMain.on('set-spellchecker-locales', (_e, { locale, serviceId }) => {
   serviceSession.setSpellCheckerLanguages(locales);
 });
 
+
+ipcMain.handle('get-desktop-capturer-sources', () => desktopCapturer.getSources({
+  types: ['screen', 'window'],
+}));
+
 ipcMain.on('window.toolbar-double-clicked', () => {
   mainWindow?.isMaximized() ? mainWindow.unmaximize() : mainWindow?.maximize();
 });
@@ -642,10 +652,18 @@ app.on('window-all-closed', () => {
     )
   ) {
     debug('Window: all windows closed, quit app');
-    app.quit();
+    if (!overrideAppQuitForUpdate) {
+      // TODO: based on https://github.com/electron-userland/electron-builder/issues/6058#issuecomment-1130344017 (not yet tested since we don't have signed builds yet for macos)
+      app.quit();
+    }
   } else {
     debug("Window: don't quit app");
   }
+});
+
+appEvents.on('install-update', () => {
+  willQuitApp = true;
+  overrideAppQuitForUpdate = true;
 });
 
 app.on('before-quit', event => {
@@ -657,7 +675,7 @@ app.on('before-quit', event => {
     selection = dialog.showMessageBoxSync(mainWindow!, {
       type: 'question',
       message: 'Quit',
-      detail: 'Do you really want to quit Ferdi?',
+      detail: 'Do you really want to quit Ferdium?',
       buttons: ['Yes', 'No'],
     });
   }

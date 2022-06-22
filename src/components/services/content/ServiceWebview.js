@@ -7,7 +7,7 @@ import { join } from 'path';
 
 import ServiceModel from '../../../models/Service';
 
-const debug = require('debug')('Ferdi:Services');
+const debug = require('../../../preload-safe-debug')('Ferdium:Services');
 
 class ServiceWebview extends Component {
   static propTypes = {
@@ -31,7 +31,7 @@ class ServiceWebview extends Component {
           });
           this.webview.view.addEventListener('did-navigate', () => {
             if (this.props.service._webview) {
-              document.title = `Ferdi - ${this.props.service.name} ${
+              document.title = `Ferdium - ${this.props.service.name} ${
                 this.props.service.dialogTitle
                   ? ` - ${this.props.service.dialogTitle}`
                   : ''
@@ -56,7 +56,7 @@ class ServiceWebview extends Component {
       webview.view.blur();
       webview.view.focus();
       window.setTimeout(() => {
-        document.title = `Ferdi - ${this.props.service.name} ${
+        document.title = `Ferdium - ${this.props.service.name} ${
           this.props.service.dialogTitle
             ? ` - ${this.props.service.dialogTitle}`
             : ''
@@ -95,10 +95,18 @@ class ServiceWebview extends Component {
         preload={preloadScript}
         partition={service.partition}
         onDidAttach={() => {
-          setWebviewReference({
-            serviceId: service.id,
-            webview: this.webview.view,
-          });
+          // Force the event handler to run in a new task.
+          // This resolves a race condition when the `did-attach` is called,
+          // but the webview is not attached to the DOM yet:
+          // https://github.com/electron/electron/issues/31918
+          // This prevents us from immediately attaching listeners such as `did-stop-load`:
+          // https://github.com/ferdium/ferdium-app/issues/157
+          setTimeout(() => {
+            setWebviewReference({
+              serviceId: service.id,
+              webview: this.webview.view,
+            });
+          }, 0);
         }}
         onUpdateTargetUrl={this.updateTargetUrl}
         useragent={service.userAgent}
@@ -109,7 +117,7 @@ class ServiceWebview extends Component {
         nodeintegration
         webpreferences={`spellcheck=${
           isSpellcheckerEnabled ? 1 : 0
-        }, contextIsolation=1, nativeWindowOpen=1, enableRemoteModule=1`}
+        }, contextIsolation=1`}
       />
     );
   }

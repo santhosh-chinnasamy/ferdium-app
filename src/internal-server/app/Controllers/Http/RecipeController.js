@@ -4,23 +4,24 @@ const { validateAll } = use('Validator');
 const Env = use('Env');
 
 const fetch = require('node-fetch');
-const debug = require('debug')('Ferdi:internalServer:RecipeController');
-const { LIVE_FERDI_API } = require('../../../../config');
+const debug = require('../../../../preload-safe-debug')('Ferdium:internalServer:RecipeController');
+const { LIVE_FERDIUM_API } = require('../../../../config');
+const { convertToJSON } = require('../../../../jsUtils');
 const { API_VERSION } = require('../../../../environment-remote');
 
-const RECIPES_URL = `${LIVE_FERDI_API}/${API_VERSION}/recipes`;
+const RECIPES_URL = `${LIVE_FERDIUM_API}/${API_VERSION}/recipes`;
 
 class RecipeController {
   // List official and custom recipes
   async list({ response }) {
     const recipesUrlFetch = await fetch(RECIPES_URL);
-    const officialRecipes = JSON.parse(await recipesUrlFetch.text());
+    const officialRecipes = convertToJSON(await recipesUrlFetch.text());
     const allRecipes = await Recipe.all();
     const customRecipesArray = allRecipes.rows;
     const customRecipes = customRecipesArray.map(recipe => ({
       id: recipe.recipeId,
       name: recipe.name,
-      ...JSON.parse(recipe.data),
+      ...convertToJSON(recipe.data),
     }));
 
     const recipes = [...officialRecipes, ...customRecipes];
@@ -47,13 +48,13 @@ class RecipeController {
     // Get results
     let results;
 
-    if (needle === 'ferdi:custom') {
+    if (needle === 'ferdium:custom') {
       const allRecipes = await Recipe.all();
       const dbResults = allRecipes.toJSON();
       results = dbResults.map(recipe => ({
         id: recipe.recipeId,
         name: recipe.name,
-        ...JSON.parse(recipe.data),
+        ...convertToJSON(recipe.data),
       }));
     } else {
       let remoteResults = [];
@@ -62,7 +63,7 @@ class RecipeController {
         const recipesUrlFetch = await fetch(
           `${RECIPES_URL}/search?needle=${encodeURIComponent(needle)}`,
         );
-        remoteResults = JSON.parse(await recipesUrlFetch.text());
+        remoteResults = convertToJSON(await recipesUrlFetch.text());
       }
 
       debug('remoteResults:', remoteResults);
@@ -74,7 +75,7 @@ class RecipeController {
       const localResults = localResultsArray.map(recipe => ({
         id: recipe.recipeId,
         name: recipe.name,
-        ...JSON.parse(recipe.data),
+        ...convertToJSON(recipe.data),
       }));
 
       debug('localResults:', localResults);
@@ -85,17 +86,10 @@ class RecipeController {
     return response.send(results);
   }
 
-  async update({ request, response }) {
-    // eslint-disable-next-line eqeqeq
-    if (Env.get('CONNECT_WITH_FRANZ') == 'true') {
-      const body = request.all();
-      const remoteUpdates = await fetch(`${RECIPES_URL}/update`, {
-        method: 'POST',
-        body: JSON.stringify(body),
-        headers: {'Content-Type': 'application/json'}
-      });
-      return response.send(await remoteUpdates.json());
-    }
+  // Return an empty array
+  update({
+    response,
+  }) {
     return response.send([]);
   }
 
@@ -103,7 +97,7 @@ class RecipeController {
     response,
   }) {
     const recipesUrlFetch = await fetch(`${RECIPES_URL}/popular`);
-    const featuredRecipes = JSON.parse(await recipesUrlFetch.text());
+    const featuredRecipes = convertToJSON(await recipesUrlFetch.text());
     return response.send(featuredRecipes);
   }
 
@@ -123,17 +117,18 @@ class RecipeController {
 
     const service = params.recipe;
 
-    // eslint-disable-next-line eqeqeq
-    if (Env.get('CONNECT_WITH_FRANZ') == 'true') {
-      return response.redirect(`${RECIPES_URL}/download/${service}`);
-    }
     // Check for invalid characters
     if (/\.+/.test(service) || /\/+/.test(service)) {
       return response.send('Invalid recipe name');
     }
+
     // Check if recipe exists in recipes folder
     if (await Drive.exists(`${service}.tar.gz`)) {
       return response.send(await Drive.get(`${service}.tar.gz`));
+    }
+    // eslint-disable-next-line eqeqeq
+    if (Env.get('CONNECT_WITH_FRANZ') == 'true') {
+      return response.redirect(`${RECIPES_URL}/download/${service}`);
     }
     return response.status(400).send({
       message: 'Recipe not found',

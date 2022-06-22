@@ -6,7 +6,8 @@ import { defineMessages, injectIntl } from 'react-intl';
 
 import Form from '../../lib/Form';
 import Input from '../ui/Input';
-import Button from '../ui/Button';
+import Button from '../ui/button';
+import { H1 } from '../ui/headline';
 import { isMac } from '../../environment';
 
 import { globalError as globalErrorPropType } from '../../prop-types';
@@ -51,18 +52,19 @@ class Locked extends Component {
     error: globalErrorPropType.isRequired,
   };
 
-  form = new Form(
-    {
+  form = (() => {
+    const { intl } = this.props;
+    return new Form({
       fields: {
         password: {
-          label: this.props.intl.formatMessage(messages.passwordLabel),
+          label: intl.formatMessage(messages.passwordLabel),
           value: '',
           type: 'password',
         },
       },
     },
-    this.props.intl,
-  );
+    intl,
+  )})();
 
   submit(e) {
     e.preventDefault();
@@ -100,7 +102,7 @@ class Locked extends Component {
       <div className="auth__container">
         <form className="franz-form auth__form" onSubmit={e => this.submit(e)}>
           <img src="./assets/images/logo.svg" className="auth__logo" alt="" />
-          <h1>{intl.formatMessage(messages.headline)}</h1>
+          <H1>{intl.formatMessage(messages.headline)}</H1>
 
           {touchIdEnabled && (
             <>

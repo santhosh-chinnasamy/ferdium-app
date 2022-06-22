@@ -14,13 +14,14 @@ import { TabItem } from '../../ui/Tabs/TabItem';
 import Input from '../../ui/Input';
 import Toggle from '../../ui/Toggle';
 import Slider from '../../ui/Slider';
-import Button from '../../ui/Button';
+import Button from '../../ui/button';
 import ImageUpload from '../../ui/ImageUpload';
 import Select from '../../ui/Select';
 
 import { isMac } from '../../../environment';
 import globalMessages from '../../../i18n/globalMessages';
 import { Icon } from '../../ui/icon';
+import { H3 } from '../../ui/headline';
 
 const messages = defineMessages({
   saveService: {
@@ -107,6 +108,10 @@ const messages = defineMessages({
     id: 'settings.service.form.headlineGeneral',
     defaultMessage: 'General',
   },
+  headlineAppearance: {
+    id: 'settings.service.form.headlineAppearance',
+    defaultMessage: 'Appearance',
+  },
   headlineDarkReaderSettings: {
     id: 'settings.service.form.headlineDarkReaderSettings',
     defaultMessage: 'Dark Reader Settings',
@@ -125,12 +130,16 @@ const messages = defineMessages({
   },
   proxyRestartInfo: {
     id: 'settings.service.form.proxy.restartInfo',
-    defaultMessage: 'Please restart Ferdi after changing proxy Settings.',
+    defaultMessage: 'Please restart Ferdium after changing proxy Settings.',
   },
   proxyInfo: {
     id: 'settings.service.form.proxy.info',
     defaultMessage:
-      'Proxy settings will not be synchronized with the Ferdi servers.',
+      'Proxy settings will not be synchronized with the Ferdium servers.',
+  },
+  serviceReloadRequired: {
+    id: 'settings.service.reloadRequired',
+    defaultMessage: 'Changes require reload of the service',
   },
 });
 
@@ -324,7 +333,7 @@ class EditServiceForm extends Component {
             <div className="service-flex-grid">
               <div className="settings__options">
                 <div className="settings__settings-group">
-                  <h3>{intl.formatMessage(messages.headlineNotifications)}</h3>
+                  <H3>{intl.formatMessage(messages.headlineNotifications)}</H3>
                   <Toggle field={form.$('isNotificationEnabled')} />
                   <Toggle field={form.$('isMuted')} />
                   <p className="settings__help indented__help">
@@ -333,7 +342,7 @@ class EditServiceForm extends Component {
                 </div>
 
                 <div className="settings__settings-group">
-                  <h3>{intl.formatMessage(messages.headlineBadges)}</h3>
+                  <H3>{intl.formatMessage(messages.headlineBadges)}</H3>
                   <Toggle field={form.$('isBadgeEnabled')} />
                   {recipe.hasIndirectMessages &&
                     form.$('isBadgeEnabled').value && (
@@ -352,26 +361,36 @@ class EditServiceForm extends Component {
                 </div>
 
                 <div className="settings__settings-group">
-                  <h3>{intl.formatMessage(messages.headlineGeneral)}</h3>
+                  <H3>{intl.formatMessage(messages.headlineGeneral)}</H3>
                   <Toggle field={form.$('isEnabled')} />
                   <Toggle field={form.$('isHibernationEnabled')} />
                   <p className="settings__help indented__help">
                     {intl.formatMessage(messages.isHibernationEnabledInfo)}
                   </p>
                   <Toggle field={form.$('isWakeUpEnabled')} />
+                  <Toggle field={form.$('trapLinkClicks')} />
+                  {/* TODO: Need to figure out how to effect this change without a reload of the recipe */}
+                  <p className="settings__help indented__help">
+                    {intl.formatMessage(messages.serviceReloadRequired)}
+                  </p>
+                </div>
+
+                <div className="settings__settings-group">
+                  <H3>{intl.formatMessage(messages.headlineAppearance)}</H3>
                   <Toggle field={form.$('isDarkModeEnabled')} />
                   {form.$('isDarkModeEnabled').value && (
                     <>
-                      <h3>
+                      <H3>
                         {intl.formatMessage(
                           messages.headlineDarkReaderSettings,
                         )}
-                      </h3>
+                      </H3>
                       <Slider field={form.$('darkReaderBrightness')} />
                       <Slider field={form.$('darkReaderContrast')} />
                       <Slider field={form.$('darkReaderSepia')} />
                     </>
                   )}
+                  <Toggle field={form.$('isProgressbarEnabled')} />
                 </div>
               </div>
               <div className="service-icon">
@@ -391,10 +410,10 @@ class EditServiceForm extends Component {
 
             {isProxyFeatureEnabled && (
               <div className="settings__settings-group">
-                <h3>
+                <H3>
                   {intl.formatMessage(messages.headlineProxy)}
                   <span className="badge badge--success">beta</span>
-                </h3>
+                </H3>
                 <Toggle field={form.$('proxy.isEnabled')} />
                 {form.$('proxy.isEnabled').value && (
                   <>
@@ -472,7 +491,9 @@ class EditServiceForm extends Component {
         </div>
         <div className="settings__controls">
           {/* Delete Button */}
-          {action === 'edit' && deleteButton}
+          <div>
+            {action === 'edit' && deleteButton}
+          </div>
 
           {/* Save Button */}
           {isSaving || isValidatingCustomUrl ? (

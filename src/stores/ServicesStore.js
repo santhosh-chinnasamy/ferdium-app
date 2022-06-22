@@ -16,10 +16,11 @@ import {
 } from '../helpers/recipe-helpers';
 import { workspaceStore } from '../features/workspaces';
 import { DEFAULT_SERVICE_SETTINGS, KEEP_WS_LOADED_USID } from '../config';
+import { cleanseJSObject } from '../jsUtils';
 import { SPELLCHECKER_LOCALES } from '../i18n/languages';
-import { ferdiVersion } from '../environment-remote';
+import { ferdiumVersion } from '../environment-remote';
 
-const debug = require('debug')('Ferdi:ServiceStore');
+const debug = require('../preload-safe-debug')('Ferdium:ServiceStore');
 
 export default class ServicesStore extends Store {
   @observable allServicesRequest = new CachedRequest(this.api.services, 'all');
@@ -409,9 +410,11 @@ export default class ServicesStore extends Store {
       isWakeUpEnabled: DEFAULT_SERVICE_SETTINGS.isWakeUpEnabled,
       isNotificationEnabled: DEFAULT_SERVICE_SETTINGS.isNotificationEnabled,
       isBadgeEnabled: DEFAULT_SERVICE_SETTINGS.isBadgeEnabled,
+      trapLinkClicks: DEFAULT_SERVICE_SETTINGS.trapLinkClicks,
       isMuted: DEFAULT_SERVICE_SETTINGS.isMuted,
       customIcon: DEFAULT_SERVICE_SETTINGS.customIcon,
       isDarkModeEnabled: DEFAULT_SERVICE_SETTINGS.isDarkModeEnabled,
+      isProgressbarEnabled: DEFAULT_SERVICE_SETTINGS.isProgressbarEnabled,
       spellcheckerLanguage:
         SPELLCHECKER_LOCALES[this.stores.settings.app.spellcheckerLanguage],
       userAgentPref: '',
@@ -563,7 +566,7 @@ export default class ServicesStore extends Store {
       if (!pathExistsSync(filePath)) {
         writeFileSync(
           filePath,
-          `module.exports = (config, Ferdi) => {
+          `module.exports = (config, Ferdium) => {
   // Write your scripts here
   console.log("Hello, World!", config);
 };
@@ -691,7 +694,7 @@ export default class ServicesStore extends Store {
       const service = this.active;
       if (service) {
         if (service._webview) {
-          document.title = `Ferdi - ${service.name} ${
+          document.title = `Ferdium - ${service.name} ${
             service.dialogTitle ? ` - ${service.dialogTitle}` : ''
           } ${service._webview ? `- ${service._webview.getTitle()}` : ''}`;
           this._focusService({ serviceId: service.id });
@@ -861,7 +864,7 @@ export default class ServicesStore extends Store {
     const service = this.one(serviceId);
 
     // Make sure the args are clean, otherwise ElectronJS can't transmit them
-    const cleanArgs = JSON.parse(JSON.stringify(args));
+    const cleanArgs = cleanseJSObject(args);
 
     if (service.webview) {
       service.webview.send(channel, cleanArgs);
@@ -1127,7 +1130,7 @@ export default class ServicesStore extends Store {
     const service = this.active;
     if (service) {
       this.actions.service.focusService({ serviceId: service.id });
-      document.title = `Ferdi - ${service.name} ${
+      document.title = `Ferdium - ${service.name} ${
         service.dialogTitle ? ` - ${service.dialogTitle}` : ''
       } ${service._webview ? `- ${service._webview.getTitle()}` : ''}`;
     } else {
@@ -1273,16 +1276,14 @@ export default class ServicesStore extends Store {
 
     if (service.webview) {
       // We need to completely clone the object, otherwise Electron won't be able to send the object via IPC
-      const shareWithWebview = JSON.parse(
-        JSON.stringify(service.shareWithWebview),
-      );
+      const shareWithWebview = cleanseJSObject(service.shareWithWebview);
 
       debug('Initialize recipe', service.recipe.id, service.name);
       service.webview.send(
         'initialize-recipe',
         {
           ...shareWithWebview,
-          franzVersion: ferdiVersion,
+          franzVersion: ferdiumVersion,
         },
         service.recipe,
       );

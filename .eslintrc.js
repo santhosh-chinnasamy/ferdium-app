@@ -1,3 +1,5 @@
+/** @type {import('eslint').Linter.Config} */
+
 module.exports = {
   root: true,
   parser: '@babel/eslint-parser',
@@ -56,7 +58,7 @@ module.exports = {
         // @typescript-eslint
         // TODO: Turn this rule on again after gulp -> webpack migration
         // gulp-typescript doesn't consider custom index.d.ts in @types
-        // This is necessary as workaround for window.ferdi vs window['ferdi']
+        // This is necessary as workaround for window.ferdium vs window['ferdium']
         '@typescript-eslint/dot-notation': 0,
         '@typescript-eslint/indent': 0,
         '@typescript-eslint/no-shadow': 0,
@@ -68,11 +70,14 @@ module.exports = {
         'import/no-unresolved': 0,
         'import/prefer-default-export': 0,
         // eslint-plugin-react
+        'react/default-props-match-prop-types': 1,
         'react/destructuring-assignment': 0,
         'react/button-has-type': 0,
         'react/forbid-prop-types': 0,
         'react/jsx-curly-newline': 0,
+        'react/no-unused-prop-types': 1,
         'react/react-in-jsx-scope': 0,
+        'react/require-default-props': 1,
         'react/jsx-no-bind': 0,
         'react/jsx-no-target-blank': 0,
         'react/jsx-props-no-spreading': 0,
@@ -132,7 +137,7 @@ module.exports = {
     'implicit-arrow-linebreak': 0,
     indent: 0,
     // TODO: Turn this rule on once the js to ts conversions are over
-    // This is necessary as workaround for window.ferdi vs window['ferdi']
+    // This is necessary as workaround for window.ferdium vs window['ferdium']
     'dot-notation': 0,
     'function-paren-newline': 0,
     'linebreak-style': 0,

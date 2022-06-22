@@ -2,9 +2,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "PowerShell Launch Current File",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${file}",
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "type": "node",
             "request": "launch",
-            "name": "Ferdi - Test API",
+            "name": "Ferdium - Test API",
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
             "program": "${workspaceFolder}/build/index.js",
             "protocol": "inspector",
@@ -16,7 +23,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Ferdi – Live API",
+            "name": "Ferdium – Live API",
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
             "program": "${workspaceFolder}/build/index.js",
             "protocol": "inspector",
@@ -28,7 +35,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Ferdi – Local API",
+            "name": "Ferdium – Local API",
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
             "program": "${workspaceFolder}/build/index.js",
             "protocol": "inspector",
@@ -40,7 +47,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "(Win Sim) Ferdi - Test API",
+            "name": "(Win Sim) Ferdium - Test API",
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
             "program": "${workspaceFolder}/build/index.js",
             "protocol": "inspector",
@@ -53,7 +60,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "(Win Sim) Ferdi – Live API",
+            "name": "(Win Sim) Ferdium – Live API",
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
             "program": "${workspaceFolder}/build/index.js",
             "protocol": "inspector",
@@ -66,7 +73,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "(Win Sim) Ferdi – Local API",
+            "name": "(Win Sim) Ferdium – Local API",
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
             "program": "${workspaceFolder}/build/index.js",
             "protocol": "inspector",

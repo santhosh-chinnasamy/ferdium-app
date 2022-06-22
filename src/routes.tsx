@@ -12,7 +12,7 @@ import TeamScreen from './containers/settings/TeamScreen';
 import EditUserScreen from './containers/settings/EditUserScreen';
 import EditSettingsScreen from './containers/settings/EditSettingsScreen';
 import InviteSettingsScreen from './containers/settings/InviteScreen';
-import SupportFerdiScreen from './containers/settings/SupportScreen';
+import SupportFerdiumScreen from './containers/settings/SupportScreen';
 import WelcomeScreen from './containers/auth/WelcomeScreen';
 import LoginScreen from './containers/auth/LoginScreen';
 import PasswordScreen from './containers/auth/PasswordScreen';
@@ -26,12 +26,7 @@ import WorkspacesScreen from './features/workspaces/containers/WorkspacesScreen'
 import EditWorkspaceScreen from './features/workspaces/containers/EditWorkspaceScreen';
 import { WORKSPACES_ROUTES } from './features/workspaces/constants';
 
-import SettingsStore from './stores/SettingsStore';
-
 type Props = {
-  stores: {
-    settings: typeof SettingsStore;
-  };
   history: any;
 };
 
@@ -62,7 +57,7 @@ class Routes extends Component<Props> {
             <Route path="/settings/team" component={TeamScreen} />
             <Route path="/settings/app" component={EditSettingsScreen} />
             <Route path="/settings/invite" component={InviteSettingsScreen} />
-            <Route path="/settings/support" component={SupportFerdiScreen} />
+            <Route path="/settings/support" component={SupportFerdiumScreen} />
           </Route>
         </Route>
         <Route path="/auth" component={AuthLayoutContainer}>

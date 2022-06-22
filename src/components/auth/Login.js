@@ -9,10 +9,11 @@ import { API_VERSION } from '../../environment-remote';
 import Form from '../../lib/Form';
 import { required, email } from '../../helpers/validation-helpers';
 import Input from '../ui/Input';
-import Button from '../ui/Button';
+import Button from '../ui/button';
 import Link from '../ui/Link';
 
 import { globalError as globalErrorPropType } from '../../prop-types';
+import { H1 } from '../ui/headline';
 
 const messages = defineMessages({
   headline: {
@@ -37,11 +38,11 @@ const messages = defineMessages({
   },
   customServerQuestion: {
     id: 'login.customServerQuestion',
-    defaultMessage: 'Using a Franz account to log in?',
+    defaultMessage: 'Using a custom Ferdium server?',
   },
   customServerSuggestion: {
     id: 'login.customServerSuggestion',
-    defaultMessage: 'Try importing your Franz account into Ferdi',
+    defaultMessage: 'Try importing your Franz account',
   },
   tokenExpired: {
     id: 'login.tokenExpired',
@@ -72,24 +73,25 @@ class Login extends Component {
     error: globalErrorPropType.isRequired,
   };
 
-  form = new Form(
-    {
+  form = (() => {
+    const { intl } = this.props;
+    return new Form({
       fields: {
         email: {
-          label: this.props.intl.formatMessage(messages.emailLabel),
+          label: intl.formatMessage(messages.emailLabel),
           value: '',
           validators: [required, email],
         },
         password: {
-          label: this.props.intl.formatMessage(messages.passwordLabel),
+          label: intl.formatMessage(messages.passwordLabel),
           value: '',
           validators: [required],
           type: 'password',
         },
       },
     },
-    this.props.intl,
-  );
+    intl,
+  )})();
 
   submit(e) {
     e.preventDefault();
@@ -117,7 +119,7 @@ class Login extends Component {
       <div className="auth__container">
         <form className="franz-form auth__form" onSubmit={e => this.submit(e)}>
           <Link to='/auth/welcome'><img src="./assets/images/logo.svg" className="auth__logo" alt="" /></Link>
-          <h1>{intl.formatMessage(messages.headline)}</h1>
+          <H1>{intl.formatMessage(messages.headline)}</H1>
           {isTokenExpired && (
             <p className="error-message center">
               {intl.formatMessage(messages.tokenExpired)}
@@ -135,13 +137,13 @@ class Login extends Component {
               <p className="error-message center">
                 {intl.formatMessage(messages.invalidCredentials)}
               </p>
-              {window['ferdi'].stores.settings.all.app.server !==
+              {window['ferdium'].stores.settings.all.app.server !==
                 LIVE_FRANZ_API && (
                 <p className="error-message center">
                   {intl.formatMessage(messages.customServerQuestion)}{' '}
                   <Link
                     to={`${window[
-                      'ferdi'
+                      'ferdium'
                     ].stores.settings.all.app.server.replace(
                       API_VERSION,
                       '',

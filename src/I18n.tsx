@@ -10,7 +10,7 @@ const translations = generatedTranslations();
 
 type Props = {
   stores: {
-    app: typeof AppStore;
+    app: AppStore;
     user: typeof UserStore;
   };
   children: ReactNode;
@@ -18,17 +18,19 @@ type Props = {
 
 class I18N extends Component<Props> {
   componentDidUpdate() {
-    window['ferdi'].menu.rebuild();
+    window['ferdium'].menu.rebuild();
   }
 
-  render() {
+  render(): ReactNode {
     const { stores, children } = this.props;
     const { locale } = stores.app;
     return (
       <IntlProvider
         {...{ locale, key: locale, messages: translations[locale] }}
         ref={intlProvider => {
-          window['ferdi'].intl = intlProvider ? intlProvider.state.intl : null;
+          window['ferdium'].intl = intlProvider
+            ? intlProvider.state.intl
+            : null;
         }}
       >
         {children}

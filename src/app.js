@@ -28,7 +28,7 @@ window.addEventListener('load', () => {
   const menu = new MenuFactory(stores, actions);
   const touchBar = new TouchBarFactory(stores, actions);
 
-  window['ferdi'] = {
+  window['ferdium'] = {
     stores,
     actions,
     api,
@@ -46,7 +46,16 @@ window.addEventListener('load', () => {
       render(preparedApp, document.querySelector('#root'));
     },
   };
-  window['ferdi'].render();
+  window['ferdium'].render();
+});
+
+// Prevent back and forward mouse events for the app itself (not inside the recipe)
+// TODO: send this request to the recipe.js
+window.addEventListener('mouseup', e => {
+  if (e.button === 3 || e.button === 4) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 });
 
 // Prevent drag and drop into window from redirecting

@@ -1,21 +1,18 @@
 const Service = use('App/Models/Service');
 const { validateAll } = use('Validator');
-const Env = use('Env');
 
 const { v4: uuid } = require('uuid');
-const path = require('path');
-const fs = require('fs-extra');
-const { LOCAL_HOSTNAME, DEFAULT_SERVICE_ORDER } = require('../../../../config');
-const { API_VERSION } = require('../../../../environment-remote');
-
-const hostname = LOCAL_HOSTNAME;
-const port = Env.get('PORT');
+const { DEFAULT_SERVICE_ORDER, DEFAULT_SERVICE_SETTINGS } = require('../../../../config');
+const { convertToJSON } = require('../../../../jsUtils');
+const { deduceIconUrl, moveIcon } = require('../../ImageHelper');
 
 class ServiceController {
   // Create a new service for user
   async create({ request, response }) {
+    const data = request.all();
+
     // Validate user input
-    const validation = await validateAll(request.all(), {
+    const validation = await validateAll(data, {
       name: 'required|string',
       recipeId: 'required',
     });
@@ -27,16 +24,13 @@ class ServiceController {
       });
     }
 
-    const data = request.all();
-
     // Get new, unused uuid
     let serviceId;
     do {
       serviceId = uuid();
     } while (
       // eslint-disable-next-line no-await-in-loop, unicorn/no-await-expression-member
-      (await Service.query().where('serviceId', serviceId).fetch()).rows
-        .length > 0
+      (await Service.query().where('serviceId', serviceId).fetch()).rows.length > 0
     );
 
     await Service.create({
@@ -46,21 +40,25 @@ class ServiceController {
       settings: JSON.stringify(data),
     });
 
+    // TODO: Remove duplication
     return response.send({
       data: {
         userId: 1,
         id: serviceId,
-        isEnabled: true,
-        isNotificationEnabled: true,
-        isBadgeEnabled: true,
-        isMuted: false,
+        isEnabled: DEFAULT_SERVICE_SETTINGS.isEnabled,
+        isNotificationEnabled: DEFAULT_SERVICE_SETTINGS.isNotificationEnabled,
+        isBadgeEnabled: DEFAULT_SERVICE_SETTINGS.isBadgeEnabled,
+        trapLinkClicks: DEFAULT_SERVICE_SETTINGS.trapLinkClicks,
+        isMuted: DEFAULT_SERVICE_SETTINGS.isMuted,
         isDarkModeEnabled: '', // TODO: This should ideally be a boolean (false). But, changing it caused the sidebar toggle to not work.
+        isProgressbarEnabled: DEFAULT_SERVICE_SETTINGS.isProgressbarEnabled,
         spellcheckerLanguage: '',
         order: DEFAULT_SERVICE_ORDER,
         customRecipe: false,
-        hasCustomIcon: false,
+        hasCustomIcon: DEFAULT_SERVICE_SETTINGS.customIcon,
         workspaces: [],
         iconUrl: null,
+        // Overwrite previous default settings with what's obtained from the request
         ...data,
       },
       status: ['created'],
@@ -73,26 +71,26 @@ class ServiceController {
     const services = allServices.rows;
     // Convert to array with all data Franz wants
     const servicesArray = services.map(service => {
-      const settings =
-        typeof service.settings === 'string'
-          ? JSON.parse(service.settings)
-          : service.settings;
+      const settings = convertToJSON(service.settings);
 
+      // TODO: Remove duplication
       return {
         customRecipe: false,
         hasCustomIcon: false,
-        isBadgeEnabled: true,
+        isBadgeEnabled: DEFAULT_SERVICE_SETTINGS.isBadgeEnabled,
+        trapLinkClicks: DEFAULT_SERVICE_SETTINGS.trapLinkClicks,
         isDarkModeEnabled: '', // TODO: This should ideally be a boolean (false). But, changing it caused the sidebar toggle to not work.
-        isEnabled: true,
-        isMuted: false,
-        isNotificationEnabled: true,
+        isProgressbarEnabled: DEFAULT_SERVICE_SETTINGS.isProgressbarEnabled,
+        isEnabled: DEFAULT_SERVICE_SETTINGS.isEnabled,
+        isMuted: DEFAULT_SERVICE_SETTINGS.isMuted,
+        isNotificationEnabled: DEFAULT_SERVICE_SETTINGS.isNotificationEnabled,
         order: DEFAULT_SERVICE_ORDER,
         spellcheckerLanguage: '',
         workspaces: [],
-        ...JSON.parse(service.settings),
-        iconUrl: settings.iconId
-          ? `http://${hostname}:${port}/${API_VERSION}/icon/${settings.iconId}`
-          : null,
+        // Overwrite previous default settings with what's obtained from the db
+        ...settings,
+        // Overwrite even after the spread operator with specific values
+        iconUrl: deduceIconUrl(settings.iconId),
         id: service.serviceId,
         name: service.name,
         recipeId: service.recipeId,
@@ -104,35 +102,20 @@ class ServiceController {
   }
 
   async edit({ request, response, params }) {
+    // Upload custom service icon if present
     if (request.file('icon')) {
-      // Upload custom service icon
-      await fs.ensureDir(path.join(Env.get('USER_PATH'), 'icons'));
+      const { id } = params;
+      const serviceQuery = await Service.query().where('serviceId', id).fetch();
+      const service = serviceQuery.rows[0];
+      const settings = convertToJSON(service.settings);
 
       const icon = request.file('icon', {
         types: ['image'],
         size: '2mb',
       });
-      const { id } = params;
-      const serviceQuery = await Service.query().where('serviceId', id).fetch();
-      const service = serviceQuery.rows[0];
-      const settings =
-        typeof service.settings === 'string'
-          ? JSON.parse(service.settings)
-          : service.settings;
 
-      // Generate new icon ID
-      let iconId;
-      do {
-        iconId = uuid() + uuid();
-      } while (fs.existsSync(path.join(Env.get('USER_PATH'), 'icons', iconId)));
-      iconId = `${iconId}.${icon.extname}`;
-
-      await icon.move(path.join(Env.get('USER_PATH'), 'icons'), {
-        name: iconId,
-        overwrite: true,
-      });
-
-      if (!icon.moved()) {
+      const iconId = await moveIcon(icon);
+      if (iconId === '-1') {
         return response.status(500).send(icon.error());
       }
 
@@ -158,7 +141,7 @@ class ServiceController {
           id,
           name: service.name,
           ...newSettings,
-          iconUrl: `http://${hostname}:${port}/${API_VERSION}/icon/${newSettings.iconId}`,
+          iconUrl: deduceIconUrl(newSettings.iconId),
           userId: 1,
         },
         status: ['updated'],
@@ -173,9 +156,7 @@ class ServiceController {
     const serviceData = serviceQuery.rows[0];
 
     const settings = {
-      ...(typeof serviceData.settings === 'string'
-        ? JSON.parse(serviceData.settings)
-        : serviceData.settings),
+      ...convertToJSON(serviceData.settings),
       ...data,
     };
 
@@ -198,24 +179,11 @@ class ServiceController {
         id,
         name: service.name,
         ...settings,
-        iconUrl: `${Env.get('APP_URL')}/${API_VERSION}/icon/${settings.iconId}`,
+        iconUrl: deduceIconUrl(settings.iconId),
         userId: 1,
       },
       status: ['updated'],
     });
-  }
-
-  async icon({ params, response }) {
-    const { id } = params;
-
-    const iconPath = path.join(Env.get('USER_PATH'), 'icons', id);
-    if (!fs.existsSync(iconPath)) {
-      return response.status(404).send({
-        status: "Icon doesn't exist",
-      });
-    }
-
-    return response.download(iconPath);
   }
 
   async reorder({ request, response }) {
@@ -231,7 +199,7 @@ class ServiceController {
       const serviceData = serviceQuery.rows[0];
 
       const settings = {
-        ...JSON.parse(serviceData.settings),
+        ...convertToJSON(serviceData.settings),
         order: data[service],
       };
 
@@ -248,26 +216,26 @@ class ServiceController {
     const services = allServices.rows;
     // Convert to array with all data Franz wants
     const servicesArray = services.map(service => {
-      const settings =
-        typeof service.settings === 'string'
-          ? JSON.parse(service.settings)
-          : service.settings;
+      const settings = convertToJSON(service.settings);
 
+      // TODO: Remove duplication
       return {
         customRecipe: false,
-        hasCustomIcon: false,
-        isBadgeEnabled: true,
+        hasCustomIcon: DEFAULT_SERVICE_SETTINGS.customIcon,
+        isBadgeEnabled: DEFAULT_SERVICE_SETTINGS.isBadgeEnabled,
+        trapLinkClicks: DEFAULT_SERVICE_SETTINGS.trapLinkClicks,
         isDarkModeEnabled: '', // TODO: This should ideally be a boolean (false). But, changing it caused the sidebar toggle to not work.
-        isEnabled: true,
-        isMuted: false,
-        isNotificationEnabled: true,
+        isProgressbarEnabled: DEFAULT_SERVICE_SETTINGS.isProgressbarEnabled,
+        isEnabled: DEFAULT_SERVICE_SETTINGS.isEnabled,
+        isMuted: DEFAULT_SERVICE_SETTINGS.isMuted,
+        isNotificationEnabled: DEFAULT_SERVICE_SETTINGS.isNotificationEnabled,
         order: DEFAULT_SERVICE_ORDER,
         spellcheckerLanguage: '',
         workspaces: [],
-        ...JSON.parse(service.settings),
-        iconUrl: settings.iconId
-          ? `http://${hostname}:${port}/${API_VERSION}/icon/${settings.iconId}`
-          : null,
+        // Overwrite previous default settings with what's obtained from the db
+        ...settings,
+        // Overwrite even after the spread operator with specific values
+        iconUrl: deduceIconUrl(settings.iconId),
         id: service.serviceId,
         name: service.name,
         recipeId: service.recipeId,

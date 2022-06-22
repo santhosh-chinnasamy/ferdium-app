@@ -1,6 +1,6 @@
 exports.default = async function notarizing(context) {
   const { electronPlatformName, appOutDir } = context;
-  if (electronPlatformName !== 'darwin' || process.env.SKIP_NOTARIZATION === 'true' || (process.env.GIT_BRANCH_NAME !== 'release' && process.env.GIT_BRANCH_NAME !== 'nightly')) {
+  if (electronPlatformName !== 'darwin' || process.env.CSC_IDENTITY_AUTO_DISCOVERY === 'false' || (process.env.GIT_BRANCH_NAME !== 'release' && process.env.GIT_BRANCH_NAME !== 'nightly')) {
     return;
   }
 
@@ -10,9 +10,9 @@ exports.default = async function notarizing(context) {
   const { notarize } = require('electron-notarize');
 
   await notarize({
-    appBundleId: 'com.kytwb.ferdi',
+    appBundleId: 'org.ferdium.ferdium-app',
     appPath: `${appOutDir}/${appName}.app`,
-    ascProvider: 'B6J9X9DWFL',
+    ascProvider: '55E9FPJ93P',
     appleId: process.env.APPLEID,
     appleIdPassword: process.env.APPLEID_PASSWORD,
   });

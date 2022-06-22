@@ -85,6 +85,14 @@ const messages = defineMessages({
     id: 'settings.service.form.darkReaderSepia',
     defaultMessage: 'Dark Reader Sepia',
   },
+  enableProgressbar: {
+    id: 'settings.service.form.enableProgressbar',
+    defaultMessage: 'Enable Progress bar',
+  },
+  trapLinkClicks: {
+    id: 'settings.service.form.trapLinkClicks',
+    defaultMessage: 'Open URLs within Ferdium',
+  },
   onlyShowFavoritesInUnreadCount: {
     id: 'settings.service.form.onlyShowFavoritesInUnreadCount',
     defaultMessage: 'Only show Favorites in unread count',
@@ -198,6 +206,11 @@ class EditServiceScreen extends Component {
           value: service.isBadgeEnabled,
           default: DEFAULT_SERVICE_SETTINGS.isBadgeEnabled,
         },
+        trapLinkClicks: {
+          label: intl.formatMessage(messages.trapLinkClicks),
+          value: service.trapLinkClicks,
+          default: DEFAULT_SERVICE_SETTINGS.trapLinkClicks,
+        },
         isMuted: {
           label: intl.formatMessage(messages.enableAudio),
           value: !service.isMuted,
@@ -234,6 +247,11 @@ class EditServiceScreen extends Component {
             ? service.darkReaderSettings.sepia
             : undefined,
           default: 10,
+        },
+        isProgressbarEnabled: {
+          label: intl.formatMessage(messages.enableProgressbar),
+          value: service.isProgressbarEnabled,
+          default: DEFAULT_SERVICE_SETTINGS.isProgressbarEnabled,
         },
         spellcheckerLanguage: {
           label: intl.formatMessage(globalMessages.spellcheckerLanguage),

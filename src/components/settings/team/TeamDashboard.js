@@ -7,8 +7,9 @@ import injectSheet from 'react-jss';
 import classnames from 'classnames';
 
 import Loader from '../../ui/Loader';
-import Button from '../../ui/Button';
+import Button from '../../ui/button';
 import Infobox from '../../ui/Infobox';
+import { H1 } from '../../ui/headline';
 import { LIVE_FRANZ_API } from '../../../config';
 
 const messages = defineMessages({
@@ -28,7 +29,7 @@ const messages = defineMessages({
   copy: {
     id: 'settings.team.copy',
     defaultMessage:
-      "Franz's Team Management allows you to manage Franz Subscriptions for multiple users. Please keep in mind that having a Franz Premium subscription will give you no advantages in using Ferdi: The only reason you still have access to Team Management is so you can manage your legacy Franz Teams and so that you don't loose any functionality in managing your account.",
+      "Franz's Team Management allows you to manage Franz Subscriptions for multiple users. Please keep in mind that having a Franz Premium subscription will give you no advantages in using Ferdium: The only reason you still have access to Team Management is so you can manage your legacy Franz Teams and so that you don't loose any functionality in managing your account.",
   },
   manageButton: {
     id: 'settings.team.manageAction',
@@ -42,6 +43,14 @@ const messages = defineMessages({
     id: 'settings.team.teamsUnavailableInfo',
     defaultMessage:
       'Teams are currently only available when using the Franz Server and after paying for Franz Professional. Please change your server to https://api.franzinfra.com to use teams.',
+  },
+  tryReloadUserInfoRequest: {
+    id: 'settings.team.tryReloadUserInfoRequest',
+    defaultMessage: 'Try reloading',
+  },
+  userInfoRequestFailed: {
+    id: 'settings.team.userInfoRequestFailed',
+    defaultMessage: 'User Info request failed',
   },
 });
 
@@ -136,14 +145,14 @@ class TeamDashboard extends Component {
 
             {!userInfoRequestFailed && !isLoading && (
               <>
-                <h1
+                <H1
                   className={classnames({
                     [classes.headline]: true,
                     [classes.headlineWithSpacing]: true,
                   })}
                 >
                   {intl.formatMessage(messages.contentHeadline)}
-                </h1>
+                </H1>
                 <div className={classes.container}>
                   <div className={classes.content}>
                     <p>{intl.formatMessage(messages.intro)}</p>
@@ -152,7 +161,7 @@ class TeamDashboard extends Component {
                   <img
                     className={classes.image}
                     src="https://cdn.franzinfra.com/announcements/assets/teams.png"
-                    alt="Ferdi for Teams"
+                    alt="Ferdium for Teams"
                   />
                 </div>
                 <div className={classes.buttonContainer}>
@@ -177,9 +186,9 @@ class TeamDashboard extends Component {
           </span>
         </div>
         <div className="settings__body">
-          <h1 className={classes.headline}>
+          <H1 className={classes.headline}>
             {intl.formatMessage(messages.teamsUnavailable)}
-          </h1>
+          </H1>
           <p
             className="settings__message"
             style={{

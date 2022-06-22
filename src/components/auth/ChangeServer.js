@@ -5,12 +5,13 @@ import { defineMessages, injectIntl } from 'react-intl';
 import Form from '../../lib/Form';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
-import Button from '../ui/Button';
+import Button from '../ui/button';
 import Link from '../ui/Link';
 import Infobox from '../ui/Infobox';
 import { url, required } from '../../helpers/validation-helpers';
-import { LIVE_FERDI_API, LIVE_FRANZ_API } from '../../config';
+import { LIVE_FERDIUM_API, LIVE_FRANZ_API } from '../../config';
 import globalMessages from '../../i18n/globalMessages';
+import { H1 } from '../ui/headline';
 
 const messages = defineMessages({
   headline: {
@@ -23,7 +24,7 @@ const messages = defineMessages({
   },
   warning: {
     id: 'changeserver.warning',
-    defaultMessage: 'Extra settings offered by Ferdi will not be saved',
+    defaultMessage: 'Extra settings offered by Ferdium will not be saved',
   },
   customServerLabel: {
     id: 'changeserver.customServerLabel',
@@ -41,20 +42,21 @@ class ChangeServer extends Component {
     server: PropTypes.string.isRequired,
   };
 
-  ferdiServer = LIVE_FERDI_API;
+  ferdiumServer = LIVE_FERDIUM_API;
 
   franzServer = LIVE_FRANZ_API;
 
-  defaultServers = [this.franzServer, this.ferdiServer];
+  defaultServers = [ this.ferdiumServer, this.franzServer ];
 
-  form = new Form(
-    {
+  form = (() => {
+    const { intl } = this.props;
+    return new Form({
       fields: {
         server: {
-          label: this.props.intl.formatMessage(messages.label),
+          label: intl.formatMessage(messages.label),
           value: this.props.server,
           options: [
-            { value: this.ferdiServer, label: 'Ferdi' },
+            { value: this.ferdiumServer, label: 'Ferdium (Default)' },
             { value: this.franzServer, label: 'Franz' },
             {
               value: this.defaultServers.includes(this.props.server)
@@ -65,14 +67,15 @@ class ChangeServer extends Component {
           ],
         },
         customServer: {
-          label: this.props.intl.formatMessage(messages.customServerLabel),
+          label: intl.formatMessage(messages.customServerLabel),
           value: '',
           validators: [url, required],
         },
       },
     },
-    this.props.intl,
+    intl,
   );
+  })();
 
   componentDidMount() {
     if (this.defaultServers.includes(this.props.server)) {
@@ -107,8 +110,8 @@ class ChangeServer extends Component {
       <div className="auth__container">
         <form className="franz-form auth__form" onSubmit={e => this.submit(e)}>
           <Link to='/auth/welcome'><img src="./assets/images/logo.svg" className="auth__logo" alt="" /></Link>
-          <h1>{intl.formatMessage(messages.headline)}</h1>
-          {form.$('server').value === this.franzServer && (
+          <H1>{intl.formatMessage(messages.headline)}</H1>
+          {(form.$('server').value === this.franzServer) && (
             <Infobox type="warning">
               {intl.formatMessage(messages.warning)}
             </Infobox>
@@ -117,7 +120,10 @@ class ChangeServer extends Component {
           {!this.defaultServers.includes(form.$('server').value) && (
             <Input
               placeholder="Custom Server"
-              onChange={e => this.submit(e)}
+              onChange={e => {
+                this.form.$('customServer').value = this.form.$('customServer').value.replace(/\/$/, "");
+                this.submit(e)
+              }}
               field={form.$('customServer')}
             />
           )}

@@ -3,6 +3,7 @@ import {
   app,
   Menu,
   dialog,
+  webContents,
   systemPreferences,
   getCurrentWindow,
 } from '@electron/remote';
@@ -10,8 +11,8 @@ import { autorun, observable } from 'mobx';
 import { defineMessages } from 'react-intl';
 import {
   CUSTOM_WEBSITE_RECIPE_ID,
-  GITHUB_FERDI_URL,
-  LIVE_API_FERDI_WEBSITE,
+  GITHUB_FERDIUM_URL,
+  LIVE_API_FERDIUM_WEBSITE,
 } from '../config';
 import {
   cmdOrCtrlShortcutKey,
@@ -20,13 +21,13 @@ import {
   settingsShortcutKey,
   isLinux,
   isMac,
-  lockFerdiShortcutKey,
+  lockFerdiumShortcutKey,
   todosToggleShortcutKey,
   workspaceToggleShortcutKey,
   addNewServiceShortcutKey,
-  muteFerdiShortcutKey,
+  muteFerdiumShortcutKey,
 } from '../environment';
-import { aboutAppDetails, ferdiVersion } from '../environment-remote';
+import { aboutAppDetails, ferdiumVersion } from '../environment-remote';
 import { todoActions } from '../features/todos/actions';
 import { workspaceActions } from '../features/workspaces/actions';
 import { workspaceStore } from '../features/workspaces/index';
@@ -123,6 +124,10 @@ const menuItems = defineMessages({
     id: 'menu.view.toggleFullScreen',
     defaultMessage: 'Toggle Full Screen',
   },
+  toggleNavigationBar: {
+    id: 'menu.view.toggleNavigationBar',
+    defaultMessage: 'Toggle Navigation Bar',
+  },
   toggleDarkMode: {
     id: 'menu.view.toggleDarkMode',
     defaultMessage: 'Toggle Dark Mode',
@@ -143,13 +148,13 @@ const menuItems = defineMessages({
     id: 'menu.view.reloadService',
     defaultMessage: 'Reload Service',
   },
-  reloadFerdi: {
-    id: 'menu.view.reloadFerdi',
-    defaultMessage: 'Reload Ferdi',
+  reloadFerdium: {
+    id: 'menu.view.reloadFerdium',
+    defaultMessage: 'Reload Ferdium',
   },
-  lockFerdi: {
-    id: 'menu.view.lockFerdi',
-    defaultMessage: 'Lock Ferdi',
+  lockFerdium: {
+    id: 'menu.view.lockFerdium',
+    defaultMessage: 'Lock Ferdium',
   },
   reloadTodos: {
     id: 'menu.view.reloadTodos',
@@ -189,7 +194,7 @@ const menuItems = defineMessages({
   },
   debugInfoCopiedHeadline: {
     id: 'menu.help.debugInfoCopiedHeadline',
-    defaultMessage: 'Ferdi Debug Information',
+    defaultMessage: 'Ferdium Debug Information',
   },
   debugInfoCopiedBody: {
     id: 'menu.help.debugInfoCopiedBody',
@@ -233,7 +238,7 @@ const menuItems = defineMessages({
   },
   about: {
     id: 'menu.app.about',
-    defaultMessage: 'About Ferdi',
+    defaultMessage: 'About Ferdium',
   },
   checkForUpdates: {
     id: 'menu.app.checkForUpdates',
@@ -318,7 +323,7 @@ const menuItems = defineMessages({
 });
 
 function getActiveService() {
-  return window['ferdi'].stores.services.active;
+  return window['ferdium'].stores.services.active;
 }
 
 const _titleBarTemplateFactory = (intl, locked) => [
@@ -380,7 +385,7 @@ const _titleBarTemplateFactory = (intl, locked) => [
         label: intl.formatMessage(menuItems.openQuickSwitch),
         accelerator: `${cmdOrCtrlShortcutKey()}+S`,
         click() {
-          window['ferdi'].features.quickSwitch.state.isModalVisible = true;
+          window['ferdium'].features.quickSwitch.state.isModalVisible = true;
         },
       },
       {
@@ -396,7 +401,7 @@ const _titleBarTemplateFactory = (intl, locked) => [
             // Focus webview so find in page popup gets focused
             service.webview.focus();
 
-            window['ferdi'].actions.service.sendIPCMessage({
+            window['ferdium'].actions.service.sendIPCMessage({
               serviceId: service.id,
               channel: 'find-in-page',
               args: {},
@@ -459,15 +464,30 @@ const _titleBarTemplateFactory = (intl, locked) => [
         role: 'toggleFullScreen',
       },
       {
+        label: intl.formatMessage(menuItems.toggleNavigationBar),
+        accelerator: `${cmdOrCtrlShortcutKey()}+B`,
+        role: 'toggleNavigationBar',
+        type: 'checkbox',
+        checked: window['ferdium'].stores.settings.app.navigationBarManualActive,
+        click: () => {
+          window['ferdium'].actions.settings.update({
+            type: 'app',
+            data: {
+              navigationBarManualActive: !window['ferdium'].stores.settings.app.navigationBarManualActive,
+            }
+          });
+        }
+      },
+      {
         label: intl.formatMessage(menuItems.toggleDarkMode),
         type: 'checkbox',
         accelerator: `${cmdOrCtrlShortcutKey()}+${shiftKey()}+D`,
-        checked: window['ferdi'].stores.settings.app.darkMode,
+        checked: window['ferdium'].stores.settings.app.darkMode,
         click: () => {
-          window['ferdi'].actions.settings.update({
+          window['ferdium'].actions.settings.update({
             type: 'app',
             data: {
-              darkMode: !window['ferdi'].stores.settings.app.darkMode,
+              darkMode: !window['ferdium'].stores.settings.app.darkMode,
             },
           });
         },
@@ -513,14 +533,14 @@ const _titleBarTemplateFactory = (intl, locked) => [
       {
         label: intl.formatMessage(menuItems.learnMore),
         click() {
-          openExternalUrl(LIVE_API_FERDI_WEBSITE, true);
+          openExternalUrl(LIVE_API_FERDIUM_WEBSITE, true);
         },
       },
       {
         label: intl.formatMessage(menuItems.changelog),
         click() {
           openExternalUrl(
-            `${GITHUB_FERDI_URL}/ferdi/releases/tag/v${ferdiVersion}`,
+            `${GITHUB_FERDIUM_URL}/ferdium-app/releases/tag/v${ferdiumVersion}`,
             true,
           );
         },
@@ -538,7 +558,7 @@ const _titleBarTemplateFactory = (intl, locked) => [
       {
         label: intl.formatMessage(menuItems.support),
         click() {
-          openExternalUrl(`${LIVE_API_FERDI_WEBSITE}/contact`, true);
+          openExternalUrl(`${LIVE_API_FERDIUM_WEBSITE}/contact`, true);
         },
       },
       {
@@ -584,13 +604,13 @@ class FranzMenu {
     // need to clone object so we don't modify computed (cached) object
     const serviceTpl = Object.assign([], this.serviceTpl());
 
-    // Don't initialize when window['ferdi'] is undefined
-    if (window['ferdi'] === undefined) {
+    // Don't initialize when window['ferdium'] is undefined
+    if (window['ferdium'] === undefined) {
       console.log('skipping menu init');
       return;
     }
 
-    const { intl } = window['ferdi'];
+    const { intl } = window['ferdium'];
     const locked = this.stores.settings.app.locked
       && this.stores.settings.app.lockingFeatureEnabled
       && this.stores.user.isLoggedIn;
@@ -601,13 +621,13 @@ class FranzMenu {
       tpl[1].submenu.push({
         label: intl.formatMessage(menuItems.autohideMenuBar),
         type: 'checkbox',
-        checked: window['ferdi'].stores.settings.app.autohideMenuBar,
+        checked: window['ferdium'].stores.settings.app.autohideMenuBar,
         click: () => {
-          window['ferdi'].actions.settings.update({
+          window['ferdium'].actions.settings.update({
             type: 'app',
             data: {
               autohideMenuBar:
-                !window['ferdi'].stores.settings.app.autohideMenuBar,
+                !window['ferdium'].stores.settings.app.autohideMenuBar,
             },
           });
         },
@@ -622,8 +642,15 @@ class FranzMenu {
         {
           label: intl.formatMessage(menuItems.toggleDevTools),
           accelerator: `${cmdOrCtrlShortcutKey()}+${altKey()}+I`,
-          click: (menuItem, browserWindow) => {
-            browserWindow.webContents.toggleDevTools();
+          click: () => {
+            const windowWebContents = webContents.fromId(1);
+            const { isDevToolsOpened, openDevTools, closeDevTools } = windowWebContents;
+    
+            if (isDevToolsOpened()) {
+              closeDevTools();
+            } else {
+              openDevTools({ mode: 'right' });
+            }
           },
         },
         {
@@ -669,7 +696,7 @@ class FranzMenu {
           },
         },
         {
-          label: intl.formatMessage(menuItems.reloadFerdi),
+          label: intl.formatMessage(menuItems.reloadFerdium),
           accelerator: `${cmdOrCtrlShortcutKey()}+${shiftKey()}+R`,
           click: () => {
             window.location.reload();
@@ -686,8 +713,8 @@ class FranzMenu {
           type: 'separator',
         },
         {
-          label: intl.formatMessage(menuItems.lockFerdi),
-          accelerator: `${lockFerdiShortcutKey()}`,
+          label: intl.formatMessage(menuItems.lockFerdium),
+          accelerator: `${lockFerdiumShortcutKey()}`,
           enabled:
             this.stores.user.isLoggedIn &&
             this.stores.settings.app.lockingFeatureEnabled,
@@ -718,7 +745,7 @@ class FranzMenu {
       tpl[0].submenu.unshift(
         {
           label: intl.formatMessage(menuItems.touchId),
-          accelerator: `${lockFerdiShortcutKey()}`,
+          accelerator: `${lockFerdiumShortcutKey()}`,
           visible: touchIdEnabled,
           click() {
             systemPreferences
@@ -809,8 +836,8 @@ class FranzMenu {
       click: () => {
         dialog.showMessageBox({
           type: 'info',
-          title: 'Franz Ferdinand',
-          message: 'Ferdi',
+          title: 'Ferdium',
+          message: 'Ferdium',
           detail: aboutAppDetails(),
         });
       },
@@ -893,7 +920,7 @@ class FranzMenu {
   }
 
   serviceTpl() {
-    const { intl } = window['ferdi'];
+    const { intl } = window['ferdium'];
     const { user, services, settings } = this.stores;
     if (!user.isLoggedIn) return [];
     const menu = [];
@@ -942,7 +969,7 @@ class FranzMenu {
               : menuItems.muteApp,
           )
           .replace('&', '&&'),
-        accelerator: `${muteFerdiShortcutKey()}`,
+        accelerator: `${muteFerdiumShortcutKey()}`,
         click: () => this.actions.app.toggleMuteApp(),
       },
       {
@@ -989,7 +1016,7 @@ class FranzMenu {
   workspacesMenu() {
     const { workspaces, activeWorkspace, isWorkspaceDrawerOpen } =
       workspaceStore;
-    const { intl } = window['ferdi'];
+    const { intl } = window['ferdium'];
     const menu = [];
 
     // Add new workspace item:
@@ -1051,7 +1078,7 @@ class FranzMenu {
 
   todosMenu() {
     const { isTodosPanelVisible, isFeatureEnabledByUser } = this.stores.todos;
-    const { intl } = window['ferdi'];
+    const { intl } = window['ferdium'];
     const menu = [];
 
     const drawerLabel = isTodosPanelVisible
@@ -1085,7 +1112,7 @@ class FranzMenu {
   }
 
   debugMenu() {
-    const { intl } = window['ferdi'];
+    const { intl } = window['ferdium'];
 
     return [
       {
@@ -1108,7 +1135,7 @@ class FranzMenu {
       {
         label: intl.formatMessage(menuItems.publishDebugInfo),
         click: () => {
-          window['ferdi'].features.publishDebugInfo.state.isModalVisible = true;
+          window['ferdium'].features.publishDebugInfo.state.isModalVisible = true;
         },
       },
     ];

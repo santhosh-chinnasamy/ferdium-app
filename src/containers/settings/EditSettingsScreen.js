@@ -1,3 +1,4 @@
+import { ipcRenderer } from 'electron';
 import { Component } from 'react';
 import PropTypes from 'prop-types';
 import { inject, observer } from 'mobx-react';
@@ -13,6 +14,7 @@ import {
   DEFAULT_APP_SETTINGS,
   HIBERNATION_STRATEGIES,
   SIDEBAR_WIDTH,
+  SIDEBAR_SERVICES_LOCATION,
   ICON_SIZES,
   NAVIGATION_BAR_BEHAVIOURS,
   SEARCH_ENGINE_NAMES,
@@ -37,12 +39,12 @@ import globalMessages from '../../i18n/globalMessages';
 import WorkspacesStore from '../../features/workspaces/store';
 import ServicesStore from '../../stores/ServicesStore';
 
-const debug = require('debug')('Ferdi:EditSettingsScreen');
+const debug = require('../../preload-safe-debug')('Ferdium:EditSettingsScreen');
 
 const messages = defineMessages({
   autoLaunchOnStart: {
     id: 'settings.app.form.autoLaunchOnStart',
-    defaultMessage: 'Launch Ferdi on start',
+    defaultMessage: 'Launch Ferdium on start',
   },
   autoLaunchInBackground: {
     id: 'settings.app.form.autoLaunchInBackground',
@@ -50,7 +52,7 @@ const messages = defineMessages({
   },
   runInBackground: {
     id: 'settings.app.form.runInBackground',
-    defaultMessage: 'Keep Ferdi in background when closing the window',
+    defaultMessage: 'Keep Ferdium in background when closing the window',
   },
   startMinimized: {
     id: 'settings.app.form.startMinimized',
@@ -58,27 +60,31 @@ const messages = defineMessages({
   },
   confirmOnQuit: {
     id: 'settings.app.form.confirmOnQuit',
-    defaultMessage: 'Confirm when quitting Ferdi',
+    defaultMessage: 'Confirm when quitting Ferdium',
   },
   enableSystemTray: {
     id: 'settings.app.form.enableSystemTray',
-    defaultMessage: 'Always show Ferdi in System Tray',
+    defaultMessage: 'Always show Ferdium in System Tray',
   },
   enableMenuBar: {
     id: 'settings.app.form.enableMenuBar',
-    defaultMessage: 'Always show Ferdi in Menu Bar',
+    defaultMessage: 'Always show Ferdium in Menu Bar',
   },
   reloadAfterResume: {
     id: 'settings.app.form.reloadAfterResume',
-    defaultMessage: 'Reload Ferdi after system resume',
+    defaultMessage: 'Reload Ferdium after system resume',
+  },
+  reloadAfterResumeTime: {
+    id: 'settings.app.form.reloadAfterResumeTime',
+    defaultMessage: 'Time to consider the system as idle/suspended (in minutes)',
   },
   minimizeToSystemTray: {
     id: 'settings.app.form.minimizeToSystemTray',
-    defaultMessage: 'Minimize Ferdi to system tray',
+    defaultMessage: 'Minimize Ferdium to system tray',
   },
   closeToSystemTray: {
     id: 'settings.app.form.closeToSystemTray',
-    defaultMessage: 'Close Ferdi to system tray',
+    defaultMessage: 'Close Ferdium to system tray',
   },
   privateNotifications: {
     id: 'settings.app.form.privateNotifications',
@@ -99,10 +105,6 @@ const messages = defineMessages({
   searchEngine: {
     id: 'settings.app.form.searchEngine',
     defaultMessage: 'Search engine',
-  },
-  sentry: {
-    id: 'settings.app.form.sentry',
-    defaultMessage: 'Send telemetry data',
   },
   hibernateOnStartup: {
     id: 'settings.app.form.hibernateOnStartup',
@@ -142,7 +144,7 @@ const messages = defineMessages({
   },
   useTouchIdToUnlock: {
     id: 'settings.app.form.useTouchIdToUnlock',
-    defaultMessage: 'Allow using TouchID to unlock Ferdi',
+    defaultMessage: 'Allow using TouchID to unlock Ferdium',
   },
   inactivityLock: {
     id: 'settings.app.form.inactivityLock',
@@ -188,6 +190,10 @@ const messages = defineMessages({
     id: 'settings.app.form.serviceRibbonWidth',
     defaultMessage: 'Sidebar width',
   },
+  sidebarServicesLocation: {
+    id: 'settings.app.form.sidebarServicesLocation',
+    defaultMessage: 'Sidebar Services Icons Location',
+  },
   iconSize: {
     id: 'settings.app.form.iconSize',
     defaultMessage: 'Service icon size',
@@ -200,6 +206,30 @@ const messages = defineMessages({
     id: 'settings.app.form.useVerticalStyle',
     defaultMessage: 'Use horizontal style',
   },
+  hideRecipesButton: {
+    id: 'settings.app.form.hideRecipesButton',
+    defaultMessage: 'Hide Recipes button',
+  },
+  useGrayscaleServices: {
+    id: 'settings.app.form.useGrayscaleServices',
+    defaultMessage: 'Use grayscale services',
+  },
+  grayscaleServicesDim: {
+    id: 'settings.app.form.grayscaleServicesDim',
+    defaultMessage: 'Grayscale dim level',
+  },
+  hideWorkspacesButton: {
+    id: 'settings.app.form.hideWorkspacesButton',
+    defaultMessage: 'Hide Workspace Drawer button',
+  },
+  hideNotificationsButton: {
+    id: 'settings.app.form.hideNotificationsButton',
+    defaultMessage: 'Hide Notifications & Sound button',
+  },
+  hideSettingsButton: {
+    id: 'settings.app.form.hideSettingsButton',
+    defaultMessage: 'Hide Settings button',
+  },
   alwaysShowWorkspaces: {
     id: 'settings.app.form.alwaysShowWorkspaces',
     defaultMessage: 'Always show workspace drawer',
@@ -207,6 +237,10 @@ const messages = defineMessages({
   accentColor: {
     id: 'settings.app.form.accentColor',
     defaultMessage: 'Accent color',
+  },
+  progressbarAccentColor: {
+    id: 'settings.app.form.progressbarAccentColor',
+    defaultMessage: 'Progressbar Accent color',
   },
   showDisabledServices: {
     id: 'settings.app.form.showDisabledServices',
@@ -234,7 +268,7 @@ const messages = defineMessages({
   },
   enableGlobalHideShortcut: {
     id: 'settings.app.form.enableGlobalHideShortcut',
-    defaultMessage: 'Enable Global shortcut to hide Ferdi',
+    defaultMessage: 'Enable Global shortcut to hide Ferdium',
   },
   beta: {
     id: 'settings.app.form.beta',
@@ -246,7 +280,7 @@ const messages = defineMessages({
   },
   enableTodos: {
     id: 'settings.app.form.enableTodos',
-    defaultMessage: 'Enable Ferdi Todos',
+    defaultMessage: 'Enable Ferdium Todos',
   },
   keepAllWorkspacesLoaded: {
     id: 'settings.app.form.keepAllWorkspacesLoaded',
@@ -273,8 +307,10 @@ class EditSettingsScreen extends Component {
       workspaces: workspaceActions,
     } = this.props.actions;
 
+    const useOriginalPassword = settingsData.lockedPassword === '';
+
     this.setState({
-      lockedPassword: settingsData.lockedPassword,
+      lockedPassword: useOriginalPassword ? '' : settingsData.lockedPassword,
     });
 
     app.launchOnStartup({
@@ -291,6 +327,7 @@ class EditSettingsScreen extends Component {
         runInBackground: Boolean(settingsData.runInBackground),
         enableSystemTray: Boolean(settingsData.enableSystemTray),
         reloadAfterResume: Boolean(settingsData.reloadAfterResume),
+        reloadAfterResumeTime: Number(settingsData.reloadAfterResumeTime),
         startMinimized: Boolean(settingsData.startMinimized),
         confirmOnQuit: Boolean(settingsData.confirmOnQuit),
         minimizeToSystemTray: Boolean(settingsData.minimizeToSystemTray),
@@ -300,7 +337,6 @@ class EditSettingsScreen extends Component {
         notifyTaskBarOnMessage: Boolean(settingsData.notifyTaskBarOnMessage),
         navigationBarBehaviour: settingsData.navigationBarBehaviour,
         searchEngine: settingsData.searchEngine,
-        sentry: Boolean(settingsData.sentry),
         hibernateOnStartup: Boolean(settingsData.hibernateOnStartup),
         hibernationStrategy: Number(settingsData.hibernationStrategy),
         wakeUpStrategy: Number(settingsData.wakeUpStrategy),
@@ -309,7 +345,7 @@ class EditSettingsScreen extends Component {
         predefinedTodoServer: settingsData.predefinedTodoServer,
         customTodoServer: settingsData.customTodoServer,
         lockingFeatureEnabled: Boolean(settingsData.lockingFeatureEnabled),
-        lockedPassword: hash(String(settingsData.lockedPassword)),
+        lockedPassword: useOriginalPassword ? this.props.stores.settings.all.app.lockedPassword : hash(String(settingsData.lockedPassword)),
         useTouchIdToUnlock: Boolean(settingsData.useTouchIdToUnlock),
         inactivityLock: Number(settingsData.inactivityLock),
         scheduledDNDEnabled: Boolean(settingsData.scheduledDNDEnabled),
@@ -327,13 +363,21 @@ class EditSettingsScreen extends Component {
         splitMode: Boolean(settingsData.splitMode),
         splitColumns: Number(settingsData.splitColumns),
         serviceRibbonWidth: Number(settingsData.serviceRibbonWidth),
+        sidebarServicesLocation: Number(settingsData.sidebarServicesLocation),
         iconSize: Number(settingsData.iconSize),
         enableLongPressServiceHint: Boolean(
           settingsData.enableLongPressServiceHint,
         ),
         useVerticalStyle: Boolean(settingsData.useVerticalStyle),
+        hideRecipesButton: Boolean(settingsData.hideRecipesButton),
+        useGrayscaleServices: Boolean(settingsData.useGrayscaleServices),
+        grayscaleServicesDim: Number(settingsData.grayscaleServicesDim),
+        hideWorkspacesButton: Boolean(settingsData.hideWorkspacesButton),
+        hideNotificationsButton: Boolean(settingsData.hideNotificationsButton),
+        hideSettingsButton: Boolean(settingsData.hideSettingsButton),
         alwaysShowWorkspaces: Boolean(settingsData.alwaysShowWorkspaces),
         accentColor: settingsData.accentColor,
+        progressbarAccentColor: settingsData.progressbarAccentColor,
         showMessageBadgeWhenMuted: Boolean(
           settingsData.showMessageBadgeWhenMuted,
         ),
@@ -371,6 +415,10 @@ class EditSettingsScreen extends Component {
         todosActions.toggleTodosFeatureVisibility();
       }
     }
+  }
+
+  openProcessManager() {
+    ipcRenderer.send('openProcessManager');
   }
 
   prepareForm() {
@@ -414,6 +462,11 @@ class EditSettingsScreen extends Component {
 
     const sidebarWidth = getSelectOptions({
       locales: SIDEBAR_WIDTH,
+      sort: false,
+    });
+
+    const sidebarServicesLocation = getSelectOptions({
+      locales: SIDEBAR_SERVICES_LOCATION,
       sort: false,
     });
 
@@ -468,6 +521,11 @@ class EditSettingsScreen extends Component {
           value: settings.all.app.reloadAfterResume,
           default: DEFAULT_APP_SETTINGS.reloadAfterResume,
         },
+        reloadAfterResumeTime: {
+          label: intl.formatMessage(messages.reloadAfterResumeTime),
+          value: settings.all.app.reloadAfterResumeTime,
+          default: DEFAULT_APP_SETTINGS.reloadAfterResumeTime,
+        },
         minimizeToSystemTray: {
           label: intl.formatMessage(messages.minimizeToSystemTray),
           value: settings.all.app.minimizeToSystemTray,
@@ -505,11 +563,6 @@ class EditSettingsScreen extends Component {
           default: DEFAULT_APP_SETTINGS.searchEngine,
           options: searchEngines,
         },
-        sentry: {
-          label: intl.formatMessage(messages.sentry),
-          value: settings.all.app.sentry,
-          default: DEFAULT_APP_SETTINGS.sentry,
-        },
         hibernateOnStartup: {
           label: intl.formatMessage(messages.hibernateOnStartup),
           value: settings.all.app.hibernateOnStartup,
@@ -533,11 +586,11 @@ class EditSettingsScreen extends Component {
           options: wakeUpHibernationStrategies,
           default: DEFAULT_APP_SETTINGS.wakeUpHibernationStrategy,
         },
-	wakeUpHibernationSplay: {
+        wakeUpHibernationSplay: {
           label: intl.formatMessage(messages.wakeUpHibernationSplay),
-	  value: settings.all.app.wakeUpHibernationSplay,
-	  default: DEFAULT_APP_SETTINGS.wakeUpHibernationSplay,
-	},
+          value: settings.all.app.wakeUpHibernationSplay,
+          default: DEFAULT_APP_SETTINGS.wakeUpHibernationSplay,
+        },
         predefinedTodoServer: {
           label: intl.formatMessage(messages.predefinedTodoServer),
           value: settings.all.app.predefinedTodoServer,
@@ -658,6 +711,12 @@ class EditSettingsScreen extends Component {
           default: DEFAULT_APP_SETTINGS.serviceRibbonWidth,
           options: sidebarWidth,
         },
+        sidebarServicesLocation: {
+          label: intl.formatMessage(messages.sidebarServicesLocation),
+          value: settings.all.app.sidebarServicesLocation,
+          default: DEFAULT_APP_SETTINGS.sidebarServicesLocation,
+          options: sidebarServicesLocation,
+        },
         iconSize: {
           label: intl.formatMessage(messages.iconSize),
           value: settings.all.app.iconSize,
@@ -674,6 +733,36 @@ class EditSettingsScreen extends Component {
           value: settings.all.app.useVerticalStyle,
           default: DEFAULT_APP_SETTINGS.useVerticalStyle,
         },
+        hideRecipesButton: {
+          label: intl.formatMessage(messages.hideRecipesButton),
+          value: settings.all.app.hideRecipesButton,
+          default: DEFAULT_APP_SETTINGS.hideRecipesButton,
+        },
+        useGrayscaleServices: {
+          label: intl.formatMessage(messages.useGrayscaleServices),
+          value: settings.all.app.useGrayscaleServices,
+          default: DEFAULT_APP_SETTINGS.useGrayscaleServices,
+        },
+        grayscaleServicesDim: {
+          label: intl.formatMessage(messages.grayscaleServicesDim),
+          value: settings.all.app.grayscaleServicesDim,
+          default: DEFAULT_APP_SETTINGS.grayscaleServicesDim,
+        },
+        hideWorkspacesButton: {
+          label: intl.formatMessage(messages.hideWorkspacesButton),
+          value: settings.all.app.hideWorkspacesButton,
+          default: DEFAULT_APP_SETTINGS.hideWorkspacesButton,
+        },
+        hideNotificationsButton: {
+          label: intl.formatMessage(messages.hideNotificationsButton),
+          value: settings.all.app.hideNotificationsButton,
+          default: DEFAULT_APP_SETTINGS.hideNotificationsButton,
+        },
+        hideSettingsButton: {
+          label: intl.formatMessage(messages.hideSettingsButton),
+          value: settings.all.app.hideSettingsButton,
+          default: DEFAULT_APP_SETTINGS.hideSettingsButton,
+        },
         alwaysShowWorkspaces: {
           label: intl.formatMessage(messages.alwaysShowWorkspaces),
           value: settings.all.app.alwaysShowWorkspaces,
@@ -683,6 +772,11 @@ class EditSettingsScreen extends Component {
           label: intl.formatMessage(messages.accentColor),
           value: settings.all.app.accentColor,
           default: DEFAULT_APP_SETTINGS.accentColor,
+        },
+        progressbarAccentColor: {
+          label: intl.formatMessage(messages.progressbarAccentColor),
+          value: settings.all.app.progressbarAccentColor,
+          default: DEFAULT_APP_SETTINGS.progressbarAccentColor,
         },
         enableGPUAcceleration: {
           label: intl.formatMessage(messages.enableGPUAcceleration),
@@ -766,11 +860,13 @@ class EditSettingsScreen extends Component {
           isAdaptableDarkModeEnabled={
             this.props.stores.settings.app.adaptableDarkMode
           }
+          isUseGrayscaleServicesEnabled={this.props.stores.settings.app.useGrayscaleServices}
           isSplitModeEnabled={this.props.stores.settings.app.splitMode}
           isTodosActivated={this.props.stores.todos.isFeatureEnabledByUser}
           isUsingCustomTodoService={
             this.props.stores.todos.isUsingCustomTodoService
           }
+          openProcessManager={() => this.openProcessManager()}
           hasAddedTodosAsService={services.isTodosServiceAdded}
           isOnline={app.isOnline}
         />

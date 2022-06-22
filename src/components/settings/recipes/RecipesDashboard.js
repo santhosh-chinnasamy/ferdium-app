@@ -7,15 +7,15 @@ import { Link } from 'react-router';
 import injectSheet from 'react-jss';
 
 import { mdiOpenInNew } from '@mdi/js';
-import { Button } from '../../ui/button/index';
+import Button from '../../ui/button';
 import { Input } from '../../ui/input/index';
-import { H3, H2 } from '../../ui/headline';
+import { H3, H2, H1 } from '../../ui/headline';
 import SearchInput from '../../ui/SearchInput';
 import Infobox from '../../ui/Infobox';
 import RecipeItem from './RecipeItem';
 import Loader from '../../ui/Loader';
 import Appear from '../../ui/effects/Appear';
-import { FRANZ_SERVICE_REQUEST } from '../../../config';
+import { FERDIUM_SERVICE_REQUEST } from '../../../config';
 import RecipePreview from '../../../models/RecipePreview';
 import { Icon } from '../../ui/icon';
 
@@ -28,9 +28,9 @@ const messages = defineMessages({
     id: 'settings.searchService',
     defaultMessage: 'Search service',
   },
-  mostPopularRecipes: {
-    id: 'settings.recipes.mostPopular',
-    defaultMessage: 'Most popular',
+  ferdiumPicksRecipes: {
+    id: 'settings.recipes.ferdiumPicks',
+    defaultMessage: 'Ferdium Picks',
   },
   allRecipes: {
     id: 'settings.recipes.all',
@@ -43,7 +43,7 @@ const messages = defineMessages({
   nothingFound: {
     id: 'settings.recipes.nothingFound',
     defaultMessage:
-      'Sorry, but no service matched your search term - but you can still probably add it using the "Custom Website" option. Please note that the website might show more services that have been added to Ferdi since the version that you are currently on. To get those new services, please consider upgrading to a newer version of Ferdi.',
+      'Sorry, but no service matched your search term - but you can still probably add it using the "Custom Website" option. Please note that the website might show more services that have been added to Ferdium since the version that you are currently on. To get those new services, please consider upgrading to a newer version of Ferdium.',
   },
   servicesSuccessfulAddedInfo: {
     id: 'settings.recipes.servicesSuccessfulAddedInfo',
@@ -157,7 +157,7 @@ class RecipesDashboard extends Component {
     return (
       <div className="settings__main">
         <div className="settings__header">
-          <h1>{intl.formatMessage(messages.headline)}</h1>
+          <H1>{intl.formatMessage(messages.headline)}</H1>
         </div>
         <div className="settings__body recipes">
           {serviceStatus.length > 0 && serviceStatus.includes('created') && (
@@ -185,7 +185,7 @@ class RecipesDashboard extends Component {
               activeClassName={`${!searchNeedle ? 'badge--primary' : ''}`}
               onClick={() => resetSearch()}
             >
-              {intl.formatMessage(messages.mostPopularRecipes)}
+              {intl.formatMessage(messages.ferdiumPicksRecipes)}
             </Link>
             <Link
               to="/settings/recipes/all"
@@ -204,7 +204,7 @@ class RecipesDashboard extends Component {
               {intl.formatMessage(messages.customRecipes)}
             </Link>
             <a
-              href={FRANZ_SERVICE_REQUEST}
+              href={FERDIUM_SERVICE_REQUEST}
               target="_blank"
               className="link recipes__service-request"
               rel="noreferrer"

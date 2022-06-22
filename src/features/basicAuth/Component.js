@@ -7,13 +7,14 @@ import classnames from 'classnames';
 
 import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
-import Button from '../../components/ui/Button';
+import Button from '../../components/ui/button';
 
 import { state, resetState, sendCredentials, cancelLogin } from './store';
 import Form from './Form';
 
 import styles from './styles';
 import globalMessages from '../../i18n/globalMessages';
+import { H1 } from '../../components/ui/headline';
 
 const messages = defineMessages({
   signIn: {
@@ -64,7 +65,7 @@ class BasicAuthModal extends Component {
         close={this.cancel.bind(this)}
         showClose={false}
       >
-        <h1>{intl.formatMessage(messages.signIn)}</h1>
+        <H1>{intl.formatMessage(messages.signIn)}</H1>
         <p>
           http
           {authInfo.port === 443 && 's'}

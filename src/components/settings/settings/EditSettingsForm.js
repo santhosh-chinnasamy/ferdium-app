@@ -8,11 +8,13 @@ import { defineMessages, injectIntl } from 'react-intl';
 import { mdiGithub, mdiOpenInNew, mdiPowerPlug } from '@mdi/js';
 
 import Form from '../../../lib/Form';
-import Button from '../../ui/Button';
+import Button from '../../ui/button';
 import Toggle from '../../ui/Toggle';
 import Select from '../../ui/Select';
 import Input from '../../ui/Input';
+import ColorPickerInput from '../../ui/ColorPickerInput';
 import Infobox from '../../ui/Infobox';
+import { H1, H2, H3, H5 } from '../../ui/headline';
 
 import {
   DEFAULT_APP_SETTINGS,
@@ -21,41 +23,37 @@ import {
   SPLIT_COLUMNS_MAX,
   SPLIT_COLUMNS_MIN,
 } from '../../../config';
-import { isMac, isWindows, lockFerdiShortcutKey } from '../../../environment';
+import { isMac, isWindows, lockFerdiumShortcutKey } from '../../../environment';
 import {
-  ferdiVersion,
+  ferdiumVersion,
   userDataPath,
   userDataRecipesPath,
 } from '../../../environment-remote';
 import { openPath } from '../../../helpers/url-helpers';
 import globalMessages from '../../../i18n/globalMessages';
 import { Icon } from '../../ui/icon';
+import Slider from '../../ui/Slider';
 
-const debug = require('debug')('Ferdi:EditSettingsForm');
+const debug = require('../../../preload-safe-debug')('Ferdium:EditSettingsForm');
 
 const messages = defineMessages({
   headlineGeneral: {
     id: 'settings.app.headlineGeneral',
     defaultMessage: 'General',
   },
-  sentryInfo: {
-    id: 'settings.app.sentryInfo',
-    defaultMessage:
-      'Sending telemetry data allows us to find errors in Ferdi - we will not send any personal information like your message data!',
-  },
   hibernateInfo: {
     id: 'settings.app.hibernateInfo',
     defaultMessage:
-      'By default, Ferdi will keep all your services open and loaded in the background so they are ready when you want to use them. Service Hibernation will unload your services after a specified amount. This is useful to save RAM or keeping services from slowing down your computer.',
+      'By default, Ferdium will keep all your services open and loaded in the background so they are ready when you want to use them. Service Hibernation will unload your services after a specified amount. This is useful to save RAM or keeping services from slowing down your computer.',
   },
   inactivityLockInfo: {
     id: 'settings.app.inactivityLockInfo',
     defaultMessage:
-      'Minutes of inactivity, after which Ferdi should automatically lock. Use 0 to disable',
+      'Minutes of inactivity, after which Ferdium should automatically lock. Use 0 to disable',
   },
   todoServerInfo: {
     id: 'settings.app.todoServerInfo',
-    defaultMessage: 'This server will be used for the "Ferdi Todo" feature.',
+    defaultMessage: 'This server will be used for the "Ferdium Todo" feature.',
   },
   lockedPassword: {
     id: 'settings.app.lockedPassword',
@@ -64,12 +62,12 @@ const messages = defineMessages({
   lockedPasswordInfo: {
     id: 'settings.app.lockedPasswordInfo',
     defaultMessage:
-      "Please make sure to set a password you'll remember.\nIf you loose this password, you will have to reinstall Ferdi.",
+      "Please make sure to set a password you'll remember.\nIf you loose this password, you will have to reinstall Ferdium.",
   },
   lockInfo: {
     id: 'settings.app.lockInfo',
     defaultMessage:
-      'Password Lock allows you to keep your messages protected.\nUsing Password Lock, you will be prompted to enter your password everytime you start Ferdi or lock Ferdi yourself using the lock symbol in the bottom left corner or the shortcut {lockShortcut}.',
+      'Password Lock allows you to keep your messages protected.\nUsing Password Lock, you will be prompted to enter your password everytime you start Ferdium or lock Ferdium yourself using the lock symbol in the bottom left corner or the shortcut {lockShortcut}.',
   },
   scheduledDNDTimeInfo: {
     id: 'settings.app.scheduledDNDTimeInfo',
@@ -79,7 +77,7 @@ const messages = defineMessages({
   scheduledDNDInfo: {
     id: 'settings.app.scheduledDNDInfo',
     defaultMessage:
-      'Scheduled Do-not-Disturb allows you to define a period of time in which you do not want to get Notifications from Ferdi.',
+      'Scheduled Do-not-Disturb allows you to define a period of time in which you do not want to get Notifications from Ferdium.',
   },
   headlineLanguage: {
     id: 'settings.app.headlineLanguage',
@@ -93,15 +91,63 @@ const messages = defineMessages({
     id: 'settings.app.headlineAppearance',
     defaultMessage: 'Appearance',
   },
-  universalDarkModeInfo: {
-    id: 'settings.app.universalDarkModeInfo',
-    defaultMessage:
-      'Universal Dark Mode tries to dynamically generate dark mode styles for services that are otherwise not currently supported.',
+  sectionMain: {
+    id: 'settings.app.sectionMain',
+    defaultMessage: 'Main',
+  },
+  sectionHibernation: {
+    id: 'settings.app.sectionHibernation',
+    defaultMessage: 'Hibernation',
+  },
+  sectionGeneralUi: {
+    id: 'settings.app.sectionGeneralUi',
+    defaultMessage: 'General UI',
+  },
+  sectionSidebarSettings: {
+    id: 'settings.app.sectionSidebarSettings',
+    defaultMessage: 'Sidebar Settings',
+  },
+  sectionPrivacy: {
+    id: 'settings.app.sectionPrivacy',
+    defaultMessage: 'Privacy Settings',
+  },
+  sectionLanguage: {
+    id: 'settings.app.sectionLanguage',
+    defaultMessage: 'Language Settings',
+  },
+  sectionAdvanced: {
+    id: 'settings.app.sectionAdvanced',
+    defaultMessage: 'Advanced Settings',
+  },
+  sectionUpdates: {
+    id: 'settings.app.sectionUpdates',
+    defaultMessage: 'App Updates Settings',
+  },
+  sectionServiceIconsSettings: {
+    id: 'settings.app.sectionServiceIconsSettings',
+    defaultMessage: 'Service Icons Settings',
+  },
+  sectionAccentColorSettings: {
+    id: 'settings.app.sectionAccentColorSettings',
+    defaultMessage: 'Accent Color Settings',
   },
   accentColorInfo: {
     id: 'settings.app.accentColorInfo',
     defaultMessage:
-      'Write your accent color in a CSS-compatible format. (Default: {defaultAccentColor})',
+      'Write your color choice in a CSS-compatible format. (Default: {defaultAccentColor} or clear the input field)',
+  },
+  overallTheme: {
+    id: 'settings.app.overallTheme',
+    defaultMessage: 'Overall Theme',
+  },
+  progressbarTheme: {
+    id: 'settings.app.progressbarTheme',
+    defaultMessage: 'Progressbar Theme',
+  },
+  universalDarkModeInfo: {
+    id: 'settings.app.universalDarkModeInfo',
+    defaultMessage:
+      'Universal Dark Mode tries to dynamically generate dark mode styles for services that are otherwise not currently supported.',
   },
   headlinePrivacy: {
     id: 'settings.app.headlinePrivacy',
@@ -113,12 +159,12 @@ const messages = defineMessages({
   },
   translationHelp: {
     id: 'settings.app.translationHelp',
-    defaultMessage: 'Help us to translate Ferdi into your language.',
+    defaultMessage: 'Help us to translate Ferdium into your language.',
   },
   spellCheckerLanguageInfo: {
     id: 'settings.app.spellCheckerLanguageInfo',
     defaultMessage:
-      "Ferdi uses your Mac's build-in spellchecker to check for typos. If you want to change the languages the spellchecker checks for, you can do so in your Mac's System Preferences.",
+      "Ferdium uses your Mac's build-in spellchecker to check for typos. If you want to change the languages the spellchecker checks for, you can do so in your Mac's System Preferences.",
   },
   subheadlineCache: {
     id: 'settings.app.subheadlineCache',
@@ -126,7 +172,7 @@ const messages = defineMessages({
   },
   cacheInfo: {
     id: 'settings.app.cacheInfo',
-    defaultMessage: 'Ferdi cache is currently using {size} of disk space.',
+    defaultMessage: 'Ferdium cache is currently using {size} of disk space.',
   },
   cacheNotCleared: {
     id: 'settings.app.cacheNotCleared',
@@ -136,16 +182,16 @@ const messages = defineMessages({
     id: 'settings.app.buttonClearAllCache',
     defaultMessage: 'Clear cache',
   },
-  subheadlineFerdiProfile: {
-    id: 'settings.app.subheadlineFerdiProfile',
-    defaultMessage: 'Ferdi Profile',
+  subheadlineFerdiumProfile: {
+    id: 'settings.app.subheadlineFerdiumProfile',
+    defaultMessage: 'Ferdium Profile',
   },
-  buttonOpenFerdiProfileFolder: {
-    id: 'settings.app.buttonOpenFerdiProfileFolder',
+  buttonOpenFerdiumProfileFolder: {
+    id: 'settings.app.buttonOpenFerdiumProfileFolder',
     defaultMessage: 'Open Profile folder',
   },
-  buttonOpenFerdiServiceRecipesFolder: {
-    id: 'settings.app.buttonOpenFerdiServiceRecipesFolder',
+  buttonOpenFerdiumServiceRecipesFolder: {
+    id: 'settings.app.buttonOpenFerdiumServiceRecipesFolder',
     defaultMessage: 'Open Service Recipes folder',
   },
   buttonSearchForUpdate: {
@@ -166,7 +212,7 @@ const messages = defineMessages({
   },
   updateStatusUpToDate: {
     id: 'settings.app.updateStatusUpToDate',
-    defaultMessage: 'You are using the latest version of Ferdi',
+    defaultMessage: 'You are using the latest version of Ferdium',
   },
   currentVersion: {
     id: 'settings.app.currentVersion',
@@ -190,7 +236,8 @@ const messages = defineMessages({
   },
 });
 
-const Hr = () => <hr style={{ marginBottom: 20 }} />;
+const Hr = () => <hr className='settings__hr' style={{ marginBottom: 20, borderStyle: "dashed" }} />;
+const HrSections = () => <hr className='settings__hr-sections' style={{ marginTop: 20, marginBottom: 40, borderStyle: "solid" }} />;
 
 class EditSettingsForm extends Component {
   static propTypes = {
@@ -210,6 +257,8 @@ class EditSettingsForm extends Component {
     automaticUpdates: PropTypes.bool.isRequired,
     isDarkmodeEnabled: PropTypes.bool.isRequired,
     isAdaptableDarkModeEnabled: PropTypes.bool.isRequired,
+    isUseGrayscaleServicesEnabled: PropTypes.bool.isRequired,
+    openProcessManager: PropTypes.func.isRequired,
     isSplitModeEnabled: PropTypes.bool.isRequired,
     hasAddedTodosAsService: PropTypes.bool.isRequired,
     isOnline: PropTypes.bool.isRequired,
@@ -248,6 +297,7 @@ class EditSettingsForm extends Component {
       form,
       isCheckingForUpdates,
       isAdaptableDarkModeEnabled,
+      isUseGrayscaleServicesEnabled,
       isUpdateAvailable,
       noUpdateAvailable,
       updateIsReadyToInstall,
@@ -259,6 +309,7 @@ class EditSettingsForm extends Component {
       automaticUpdates,
       isDarkmodeEnabled,
       isSplitModeEnabled,
+      openProcessManager,
       isTodosActivated,
       hasAddedTodosAsService,
       isOnline,
@@ -274,8 +325,8 @@ class EditSettingsForm extends Component {
       updateButtonLabelMessage = messages.buttonSearchForUpdate;
     }
 
-    const { lockingFeatureEnabled, scheduledDNDEnabled } =
-      window['ferdi'].stores.settings.all.app;
+    const { lockingFeatureEnabled, scheduledDNDEnabled, reloadAfterResume } =
+      window['ferdium'].stores.settings.all.app;
 
     let cacheSize;
     let notCleared;
@@ -301,7 +352,7 @@ class EditSettingsForm extends Component {
     return (
       <div className="settings__main">
         <div className="settings__header">
-          <h1>{intl.formatMessage(globalMessages.settings)}</h1>
+          <H1>{intl.formatMessage(globalMessages.settings)}</H1>
         </div>
         <div className="settings__body">
           <form
@@ -311,7 +362,7 @@ class EditSettingsForm extends Component {
           >
             {/* Titles */}
             <div className="recipes__navigation">
-              <h2
+              <H5
                 id="general"
                 className={
                   this.state.activeSetttingsTab === 'general'
@@ -323,8 +374,8 @@ class EditSettingsForm extends Component {
                 }}
               >
                 {intl.formatMessage(messages.headlineGeneral)}
-              </h2>
-              <h2
+              </H5>
+              <H5
                 id="appearance"
                 className={
                   this.state.activeSetttingsTab === 'appearance'
@@ -336,8 +387,8 @@ class EditSettingsForm extends Component {
                 }}
               >
                 {intl.formatMessage(messages.headlineAppearance)}
-              </h2>
-              <h2
+              </H5>
+              <H5
                 id="privacy"
                 className={
                   this.state.activeSetttingsTab === 'privacy'
@@ -349,8 +400,8 @@ class EditSettingsForm extends Component {
                 }}
               >
                 {intl.formatMessage(messages.headlinePrivacy)}
-              </h2>
-              <h2
+              </H5>
+              <H5
                 id="language"
                 className={
                   this.state.activeSetttingsTab === 'language'
@@ -362,8 +413,8 @@ class EditSettingsForm extends Component {
                 }}
               >
                 {intl.formatMessage(messages.headlineLanguage)}
-              </h2>
-              <h2
+              </H5>
+              <H5
                 id="advanced"
                 className={
                   this.state.activeSetttingsTab === 'advanced'
@@ -375,8 +426,8 @@ class EditSettingsForm extends Component {
                 }}
               >
                 {intl.formatMessage(messages.headlineAdvanced)}
-              </h2>
-              <h2
+              </H5>
+              <H5
                 id="updates"
                 className={
                   this.state.activeSetttingsTab === 'updates'
@@ -391,49 +442,36 @@ class EditSettingsForm extends Component {
                 {automaticUpdates && (updateIsReadyToInstall || isUpdateAvailable || showServicesUpdatedInfoBar) && (
                   <span className="update-available">•</span>
                 )}
-              </h2>
+              </H5>
             </div>
 
             {/* General */}
             {this.state.activeSetttingsTab === 'general' && (
               <div>
+                <H2 className='settings__section_header'>
+                  {intl.formatMessage(messages.sectionMain)}
+                </H2>
                 <Toggle field={form.$('autoLaunchOnStart')} />
                 <Toggle field={form.$('runInBackground')} />
                 <Toggle field={form.$('confirmOnQuit')} />
                 <Toggle field={form.$('enableSystemTray')} />
+                {reloadAfterResume && <Hr />}
                 <Toggle field={form.$('reloadAfterResume')} />
+                {reloadAfterResume && (
+                  <div>
+                    <Input field={form.$('reloadAfterResumeTime')} />
+                    <Hr />
+                  </div>
+                )}
                 <Toggle field={form.$('startMinimized')} />
                 {isWindows && <Toggle field={form.$('minimizeToSystemTray')} />}
                 {isWindows && <Toggle field={form.$('closeToSystemTray')} />}
-                <Select field={form.$('navigationBarBehaviour')} />
-
-                <Hr />
-
-                <Select field={form.$('hibernationStrategy')} />
-                <Toggle field={form.$('hibernateOnStartup')} />
-                <p
-                  className="settings__message"
-                  style={{
-                    borderTop: 0,
-                    marginTop: 0,
-                    paddingTop: 0,
-                    marginBottom: '2rem',
-                  }}
-                >
-                  <span>{intl.formatMessage(messages.hibernateInfo)}</span>
-                </p>
-
-                <Select field={form.$('wakeUpStrategy')} />
-                <Select field={form.$('wakeUpHibernationStrategy')} />
-                <Toggle field={form.$('wakeUpHibernationSplay')} />
-
-                <Hr />
 
                 <Toggle field={form.$('keepAllWorkspacesLoaded')} />
-                <Hr />
 
                 {!hasAddedTodosAsService && (
                   <>
+                    {isTodosActivated && <Hr />}
                     <Toggle field={form.$('enableTodos')} />
                     {isTodosActivated && (
                       <div>
@@ -461,11 +499,12 @@ class EditSettingsForm extends Component {
                         )}
                       </div>
                     )}
-                    <Hr />
                   </>
                 )}
 
+                {scheduledDNDEnabled && <Hr />}
                 <Toggle field={form.$('scheduledDNDEnabled')} />
+
                 {scheduledDNDEnabled && (
                   <>
                     <div
@@ -515,19 +554,43 @@ class EditSettingsForm extends Component {
                 >
                   <span>{intl.formatMessage(messages.scheduledDNDInfo)}</span>
                 </p>
+
+                <Hr />
+
+                <Select field={form.$('navigationBarBehaviour')} />
+
+                <HrSections />
+
+                <H2 className='settings__section_header'>
+                  {intl.formatMessage(messages.sectionHibernation)}
+                </H2>
+                <Select field={form.$('hibernationStrategy')} />
+                <Toggle field={form.$('hibernateOnStartup')} />
+                <p
+                  className="settings__message"
+                  style={{
+                    borderTop: 0,
+                    marginTop: 0,
+                    paddingTop: 0,
+                    marginBottom: '2rem',
+                  }}
+                >
+                  <span>{intl.formatMessage(messages.hibernateInfo)}</span>
+                </p>
+
+                <Select field={form.$('wakeUpStrategy')} />
+                <Select field={form.$('wakeUpHibernationStrategy')} />
+                <Toggle field={form.$('wakeUpHibernationSplay')} />
               </div>
             )}
 
             {/* Appearance */}
             {this.state.activeSetttingsTab === 'appearance' && (
               <div>
-                <Toggle field={form.$('showDisabledServices')} />
-                <Toggle field={form.$('showServiceName')} />
-                <Toggle field={form.$('showMessageBadgeWhenMuted')} />
-
+                <H2 className='settings__section_header'>
+                  {intl.formatMessage(messages.sectionGeneralUi)}
+                </H2>
                 {isMac && <Toggle field={form.$('showDragArea')} />}
-
-                <Hr />
 
                 <Toggle field={form.$('adaptableDarkMode')} />
                 {!isAdaptableDarkModeEnabled && (
@@ -552,8 +615,7 @@ class EditSettingsForm extends Component {
                   </>
                 )}
 
-                <Hr />
-
+                {isSplitModeEnabled && <Hr />}
                 <Toggle field={form.$('splitMode')} />
                 {isSplitModeEnabled && (
                   <Input
@@ -566,36 +628,104 @@ class EditSettingsForm extends Component {
                   />
                 )}
 
-                <Hr />
-
-                <Select field={form.$('serviceRibbonWidth')} />
-
-                <Toggle field={form.$('useVerticalStyle')} />
-
-                <Toggle field={form.$('alwaysShowWorkspaces')} />
-
-                <Hr />
-                <Select field={form.$('iconSize')} />
-                <Toggle field={form.$('enableLongPressServiceHint')} />
-
-                <Hr />
-
-                <Input
-                  placeholder="Accent Color"
-                  onChange={e => this.submit(e)}
-                  field={form.$('accentColor')}
-                />
+                <HrSections />
+                <H2 className='settings__section_header'>
+                  {intl.formatMessage(messages.sectionAccentColorSettings)}
+                </H2>
                 <p>
                   {intl.formatMessage(messages.accentColorInfo, {
                     defaultAccentColor: DEFAULT_APP_SETTINGS.accentColor,
                   })}
                 </p>
+                <p>
+                {intl.formatMessage(messages.overallTheme)}
+                <div className="settings__settings-group__apply-color">
+                  <ColorPickerInput
+                    onChange={e => this.submit(e)}
+                    field={form.$('accentColor')}
+                    className='color-picker-input'
+                  />
+                </div>
+                </p>
+                <p>
+                {intl.formatMessage(messages.progressbarTheme)}
+                <div className="settings__settings-group__apply-color">
+                  <ColorPickerInput
+                    onChange={e => this.submit(e)}
+                    field={form.$('progressbarAccentColor')}
+                    className='color-picker-input'
+                  />
+                </div>
+                </p>
+                <p>
+                <div className="settings__settings-group__apply-color">
+                  <Button
+                    buttonType="secondary"
+                    className="settings__settings-group__apply-color__button"
+                    label="Apply color"
+                    onClick={(e) => { this.submit(e) }}
+                  />
+                </div>
+                </p>
+                <HrSections />
+
+                <H2 className='settings__section_header'>
+                  {intl.formatMessage(messages.sectionSidebarSettings)}
+                </H2>
+
+                <Select field={form.$('serviceRibbonWidth')} />
+
+                <Select field={form.$('sidebarServicesLocation')} />
+
+                <Toggle field={form.$('useVerticalStyle')} />
+
+                <Toggle field={form.$('hideRecipesButton')} />
+
+                <Toggle field={form.$('hideWorkspacesButton')} />
+
+                <Toggle field={form.$('hideNotificationsButton')} />
+
+                <Toggle field={form.$('hideSettingsButton')} />
+
+                <Toggle field={form.$('alwaysShowWorkspaces')} />
+
+                <HrSections />
+
+                <H2 className='settings__section_header'>
+                  {intl.formatMessage(messages.sectionServiceIconsSettings)}
+                </H2>
+
+                <Toggle field={form.$('showDisabledServices')} />
+                <Toggle field={form.$('showServiceName')} />
+
+                {isUseGrayscaleServicesEnabled && <Hr />}
+
+                <Toggle field={form.$('useGrayscaleServices')} />
+
+                {isUseGrayscaleServicesEnabled && (
+                  <>
+                    <Slider
+                        type="number"
+                        onChange={e => this.submit(e)}
+                        field={form.$('grayscaleServicesDim')}
+                    />
+                    <Hr />
+                  </>
+                )}
+
+                <Toggle field={form.$('showMessageBadgeWhenMuted')} />
+                <Toggle field={form.$('enableLongPressServiceHint')} />
+                <Select field={form.$('iconSize')} />
               </div>
             )}
 
             {/* Privacy */}
             {this.state.activeSetttingsTab === 'privacy' && (
               <div>
+                <H2 className='settings__section_header'>
+                  {intl.formatMessage(messages.sectionPrivacy)}
+                </H2>
+
                 <Toggle field={form.$('privateNotifications')} />
                 <Toggle field={form.$('clipboardNotifications')} />
                 {(isWindows || isMac) && (
@@ -606,12 +736,6 @@ class EditSettingsForm extends Component {
 
                 <Select field={form.$('searchEngine')} />
 
-                <Hr />
-
-                <Toggle field={form.$('sentry')} />
-                <p className="settings__help">
-                  {intl.formatMessage(messages.sentryInfo)}
-                </p>
                 <p className="settings__help">
                   {intl.formatMessage(messages.appRestartRequired)}
                 </p>
@@ -655,7 +779,7 @@ class EditSettingsForm extends Component {
                 >
                   <span>
                     {intl.formatMessage(messages.lockInfo, {
-                      lockShortcut: `${lockFerdiShortcutKey(false)}`,
+                      lockShortcut: `${lockFerdiumShortcutKey(false)}`,
                     })}
                   </span>
                 </p>
@@ -665,6 +789,11 @@ class EditSettingsForm extends Component {
             {/* Language */}
             {this.state.activeSetttingsTab === 'language' && (
               <div>
+
+                <H2 className='settings__section_header'>
+                  {intl.formatMessage(messages.sectionLanguage)}
+                </H2>
+
                 <Select field={form.$('locale')} showLabel={false} />
 
                 <Hr />
@@ -699,6 +828,11 @@ class EditSettingsForm extends Component {
             {/* Advanced */}
             {this.state.activeSetttingsTab === 'advanced' && (
               <div>
+
+                <H2 className='settings__section_header'>
+                  {intl.formatMessage(messages.sectionAdvanced)}
+                </H2>
+
                 <Toggle field={form.$('enableGPUAcceleration')} />
                 <Toggle field={form.$('enableGlobalHideShortcut')} />
                 <p className="settings__help indented__help">
@@ -722,7 +856,7 @@ class EditSettingsForm extends Component {
                 <Hr />
 
                 <div className="settings__settings-group">
-                  <h3>{intl.formatMessage(messages.subheadlineCache)}</h3>
+                  <H3>{intl.formatMessage(messages.subheadlineCache)}</H3>
                   <p>
                     {intl.formatMessage(messages.cacheInfo, {
                       size: cacheSize,
@@ -743,20 +877,30 @@ class EditSettingsForm extends Component {
                       loaded={!isClearingAllCache}
                     />
                   </p>
+                  <div style={{
+                    marginTop: 20,
+                  }}
+                  >
+                    <Button
+                      buttonType="secondary"
+                      label="Open Process Manager"
+                      onClick={openProcessManager}
+                    />
+                  </div>
                 </div>
 
                 <Hr />
 
                 <div className="settings__settings-group">
-                  <h3>
-                    {intl.formatMessage(messages.subheadlineFerdiProfile)}
-                  </h3>
+                  <H3>
+                    {intl.formatMessage(messages.subheadlineFerdiumProfile)}
+                  </H3>
                   <p>
                     <div className="settings__open-settings-file-container">
                       <Button
                         buttonType="secondary"
                         label={intl.formatMessage(
-                          messages.buttonOpenFerdiProfileFolder,
+                          messages.buttonOpenFerdiumProfileFolder,
                         )}
                         className="settings__open-settings-file-button"
                         onClick={() => openPath(profileFolder)}
@@ -764,7 +908,7 @@ class EditSettingsForm extends Component {
                       <Button
                         buttonType="secondary"
                         label={intl.formatMessage(
-                          messages.buttonOpenFerdiServiceRecipesFolder,
+                          messages.buttonOpenFerdiumServiceRecipesFolder,
                         )}
                         className="settings__open-settings-file-button"
                         onClick={() => openPath(recipeFolder)}
@@ -778,6 +922,10 @@ class EditSettingsForm extends Component {
             {/* Updates */}
             {this.state.activeSetttingsTab === 'updates' && (
               <div>
+                <H2 className='settings__section_header'>
+                  {intl.formatMessage(messages.sectionUpdates)}
+                </H2>
+
                 <Toggle field={form.$('automaticUpdates')} />
                 {automaticUpdates && (
                   <>
@@ -807,7 +955,7 @@ class EditSettingsForm extends Component {
                           <br />
                         </div>
                         <p>
-                          {intl.formatMessage(messages.currentVersion)} {ferdiVersion}
+                          {intl.formatMessage(messages.currentVersion)} {ferdiumVersion}
                         </p>
                         {noUpdateAvailable && (
                           <p>
@@ -816,7 +964,7 @@ class EditSettingsForm extends Component {
                         )}
                         {updateFailed && (
                           <Infobox type="danger" icon="alert">
-                            An error occured (check the console for more details)
+                            &nbsp;An error occurred (check the console for more details)
                           </Infobox>
                         )}
                       </>
@@ -835,14 +983,14 @@ class EditSettingsForm extends Component {
                     ) : (
                       <p>
                         <Icon icon={mdiPowerPlug} />
-                        Your services are up-to-date.
+                          &nbsp;Your services are up-to-date.
                       </p>
                     )}
                   </>
                 )}
                 <p className="settings__message">
                   <Icon icon={mdiGithub} />
-                  Ferdi is based on{' '}
+                  Ferdium is based on{' '}
                   <a
                     href={`${GITHUB_FRANZ_URL}/franz`}
                     target="_blank"

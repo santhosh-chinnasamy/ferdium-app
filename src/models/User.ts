@@ -8,12 +8,12 @@ interface IUser {
   organization: string | null;
   accountType: string | null;
   beta: boolean;
-  locale: boolean;
+  locale: string;
   isSubscriptionOwner: boolean;
   team: object;
 }
 
-// TODO: Need to cleanup these fields since we have removed the tiers of the paid plans from Ferdi
+// TODO: Need to cleanup these fields since we have removed the tiers of the paid plans from Ferdium
 export default class User {
   id: string | null = null;
 
@@ -37,7 +37,7 @@ export default class User {
 
   @observable beta = false;
 
-  @observable locale = false;
+  @observable locale: string | null = null;
 
   @observable team = {};
 

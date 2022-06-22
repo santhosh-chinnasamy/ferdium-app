@@ -49,8 +49,9 @@ import {
 } from './spellchecker';
 
 import { DEFAULT_APP_SETTINGS } from '../config';
+import { ifUndefinedString } from '../jsUtils';
 
-const debug = require('debug')('Ferdi:Plugin');
+const debug = require('../preload-safe-debug')('Ferdium:Plugin');
 
 const badgeHandler = new BadgeHandler();
 
@@ -105,9 +106,9 @@ window.open = (url, frameName, features) => {
   }
 };
 
-// We can't override APIs here, so we first expose functions via 'window.ferdi',
+// We can't override APIs here, so we first expose functions via 'window.ferdium',
 // then overwrite the corresponding field of the window object by injected JS.
-contextBridge.exposeInMainWorld('ferdi', {
+contextBridge.exposeInMainWorld('ferdium', {
   open: window.open,
   setBadge: (direct, indirect) => badgeHandler.setBadge(direct, indirect),
   safeParseInt: text => badgeHandler.safeParseInt(text),
@@ -119,7 +120,7 @@ contextBridge.exposeInMainWorld('ferdi', {
 
 ipcRenderer.sendToHost(
   'inject-js-unsafe',
-  'window.open = window.ferdi.open;',
+  'window.open = window.ferdium.open;',
   notificationsClassDefinition,
   screenShareJs,
 );
@@ -157,10 +158,7 @@ class RecipeController {
   }
 
   @computed get spellcheckerLanguage() {
-    const selected =
-      this.settings.service.spellcheckerLanguage ||
-      this.settings.app.spellcheckerLanguage;
-    return selected;
+    return ifUndefinedString(this.settings.service.spellcheckerLanguage, this.settings.app.spellcheckerLanguage);
   }
 
   cldIdentifier = null;
@@ -194,6 +192,19 @@ class RecipeController {
         inputFocusColor: '#CE9FFC',
         textColor: '#212121',
       });
+    });
+
+    // Add ability to go forward or back with mouse buttons (inside the recipe)
+    window.addEventListener('mouseup', e => {
+      if (e.button === 3) {
+          e.preventDefault()
+          e.stopPropagation()
+          window.history.back()
+      } else if (e.button === 4) {
+        e.preventDefault()
+        e.stopPropagation()
+        window.history.forward()
+      }
     });
   }
 

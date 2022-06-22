@@ -6,10 +6,11 @@ import { defineMessages, injectIntl } from 'react-intl';
 import Form from '../../lib/Form';
 import { required, email } from '../../helpers/validation-helpers';
 import Input from '../ui/Input';
-import Button from '../ui/Button';
+import Button from '../ui/button';
 import Link from '../ui/Link';
 import Infobox from '../ui/Infobox';
 import globalMessages from '../../i18n/globalMessages';
+import { H1 } from '../ui/headline';
 
 const messages = defineMessages({
   headline: {
@@ -47,18 +48,19 @@ class Password extends Component {
     status: MobxPropTypes.arrayOrObservableArray.isRequired,
   };
 
-  form = new Form(
-    {
+  form = (() => {
+    const { intl } = this.props;
+    return new Form({
       fields: {
         email: {
-          label: this.props.intl.formatMessage(messages.emailLabel),
+          label: intl.formatMessage(messages.emailLabel),
           value: '',
           validators: [required, email],
         },
       },
     },
-    this.props.intl,
-  );
+    intl,
+  )})();
 
   submit(e) {
     e.preventDefault();
@@ -79,7 +81,7 @@ class Password extends Component {
       <div className="auth__container">
         <form className="franz-form auth__form" onSubmit={e => this.submit(e)}>
           <Link to='/auth/welcome'><img src="./assets/images/logo.svg" className="auth__logo" alt="" /></Link>
-          <h1>{intl.formatMessage(messages.headline)}</h1>
+          <H1>{intl.formatMessage(messages.headline)}</H1>
           {status.length > 0 && status.includes('sent') && (
             <Infobox type="success" icon="checkbox-marked-circle-outline">
               {intl.formatMessage(messages.successInfo)}

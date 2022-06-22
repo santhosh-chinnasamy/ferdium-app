@@ -65,7 +65,7 @@ const styles = theme => ({
     display: 'block',
     zIndex: 1,
     width: '100%',
-    height: '23px',
+    height: '29px',
     position: 'absolute',
     top: 0,
   },
@@ -134,7 +134,7 @@ class AppLayout extends Component {
         <div className="app">
           {isWindows && !isFullScreen && (
             <TitleBar
-              menu={window['ferdi'].menu.template}
+              menu={window['ferdium'].menu.template}
               icon="assets/images/logo.svg"
             />
           )}
